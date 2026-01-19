@@ -15,20 +15,39 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.05, 0, 0.01, 0))
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0.05, 0))
             .headingPIDFCoefficients(new PIDFCoefficients(0.2, 0, 0.01, 0))
-            .mass(5);
+            .centripetalScaling(0.005)
+            .mass(12);
 
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(-5)
-            .strafePodX(0.5)
+            .forwardPodY(5)
+            .strafePodX(5)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("odo")
             .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
+//    public static PinpointConstants localizerConstants = new PinpointConstants()
+//            /* TRANSFORMATION:
+//               Move your physical forward offset to the Strafe constant
+//               and your physical strafe offset to the Forward constant.
+//            */
+//            .forwardPodY(0.5)   // This was your physical 'strafe' offset
+//            .strafePodX(-5.0)   // This was your physical 'forward' offset
+//
+//            .distanceUnit(DistanceUnit.INCH)
+//            .hardwareMapName("odo")
+//            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
+//
+//            /* DIRECTION CORRECTION:
+//               We need to ensure that when you push the bot toward the 'top' of the
+//               visualizer, Y increases, and toward the 'left', X decreases.
+//            */
+//            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
+//            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(0.5)
             .rightFrontMotorName("rightFront")
@@ -40,7 +59,7 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE);
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(30.0, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
