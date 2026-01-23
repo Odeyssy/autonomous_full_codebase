@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.control.FilteredPIDFCoefficients;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
@@ -15,18 +16,32 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0.05, 0))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.2, 0, 0.01, 0))
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.01, 0))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.01, 0))
             .centripetalScaling(0.005)
             .mass(12);
 
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(5)
-            .strafePodX(5)
-            .distanceUnit(DistanceUnit.INCH)
+            .forwardPodY(-182/2.54)               // Now interpreted as -5 INCHES
+            .strafePodX(-196/2.54)               // Now interpreted as -5 INCHES
+            .distanceUnit(DistanceUnit.MM) // Switch this to INCH
             .hardwareMapName("odo")
-            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
+            //.encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
+            .customEncoderResolution(2000/(2 * Math.PI * 24))
+            /* CALCULATION:
+               19.89437 (ticks/mm) * 25.4 (mm/inch) = 505.317 ticks/inch
+               Now apply your FORWARD MULTIPLIER to this number.
+            */
+            //.customEncoderResolution(505.317)
+
+            /* YAW SCALAR:
+               Only use this if your HEADING (degrees) is wrong.
+               If the TURN TUNER gave you this, plug it in here.
+            */
+
+            .yawScalar(0.99703)
+
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
@@ -59,7 +74,7 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE);
 
-    public static PathConstraints pathConstraints = new PathConstraints(30.0, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)

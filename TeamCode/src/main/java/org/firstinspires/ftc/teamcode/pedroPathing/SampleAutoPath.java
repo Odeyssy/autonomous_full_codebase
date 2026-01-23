@@ -39,7 +39,7 @@ public class SampleAutoPath extends OpMode {
     public void buildPaths(){
         driveStartShoot = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, endPose))
-                .setConstraints(new PathConstraints(0.9, 0.9, Math.toRadians(2.0), Math.toRadians(2.0)))
+                .setConstraints(new PathConstraints(0.9, 0.9, Math.toRadians(0.2), Math.toRadians(0.2)))
                 .setLinearHeadingInterpolation(startPose.getHeading(),endPose.getHeading())
                 .build();
     }
@@ -51,12 +51,14 @@ public class SampleAutoPath extends OpMode {
                 setPathState(PathState.SHOOT);
                 break;
             case SHOOT:
-                if(!follower.isBusy()){
+                if(!follower.isBusy() && pathTimer.getElapsedTimeSeconds() > 0.25){
                     pathState = PathState.END;
+                    follower.breakFollowing();
                 }
                 break;
             case END:
                 follower.breakFollowing();
+                break;
 
             default:
                 telemetry.addLine("Path State: " + pathState);
