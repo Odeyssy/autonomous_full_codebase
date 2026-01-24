@@ -8,170 +8,164 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import java.util.List;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-
 @TeleOp(name = "teleop")
 public class teleop extends LinearOpMode {
+    // Drivetrain motors
+    private DcMotor rightFront, rightRear, leftFront, leftRear;
 
-    private DcMotor frontRight, backRight, frontLeft, backLeft;
-    private DcMotor IntakeMotorLeft, IntakeMotorRight;
-    private DcMotorEx RampMotor1, RampMotor2;
-    private CRServo crServobackL, crServofrontR;
+    // Intake and shooter motors
+    private DcMotorEx IntakeMotor;
+    private DcMotorEx ShooterMotor1, ShooterMotor2;
+    private DcMotorEx rampmotor;  // New ramp motor
+
+    // Servos
+    private CRServo crServofrontR;
     private Servo GateServo;
 
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
-
-    final double TURN_GAIN  = 0.003;
-    final double TURN_TOLERANCE_PIXELS = 10.0;
-    final double MAX_TURN_SPEED = 0.4;
-
-    // --- Ramp Velocity Variables ---
-    private double currentRampTarget = 1600.0;
+    // --- Shooter Velocity Variables ---
+    private double currentShooterTarget = 1600.0;
     private final double VELOCITY_STEP = 50.0;
     private final double MAX_VELOCITY = 2800.0;
 
-    // --- Button State Tracking (Prevent rapid-fire incrementing) ---
+    // --- Intake Velocity Variable ---
+    private final double INTAKE_VELOCITY = 2800.0;
+
+    // --- Ramp Motor Velocity ---
+    private final double RAMP_VELOCITY = 1500.0;
+
+    // --- Button State Tracking ---
     private boolean dpadUpPressed = false;
     private boolean dpadDownPressed = false;
 
     @Override
     public void runOpMode() {
         // --- HARDWARE MAPPING ---
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightRear = hardwareMap.get(DcMotor.class, "rightRear");
+        rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFront = hardwareMap.get(DcMotor.class, "leftFront");
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftRear = hardwareMap.get(DcMotor.class, "leftRear");
+        leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        IntakeMotorLeft = hardwareMap.get(DcMotor.class, "IntakeMotorLeft");
-        IntakeMotorRight = hardwareMap.get(DcMotor.class, "IntakeMotorRight");
-        RampMotor1 = hardwareMap.get(DcMotorEx.class, "RampMotor1");
-        RampMotor2 = hardwareMap.get(DcMotorEx.class, "RampMotor2");
-        crServobackL = hardwareMap.get(CRServo.class, "crServobackL");
+        IntakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor");
+        ShooterMotor1 = hardwareMap.get(DcMotorEx.class, "ShooterMotor1");
+        ShooterMotor2 = hardwareMap.get(DcMotorEx.class, "ShooterMotor2");
+        rampmotor = hardwareMap.get(DcMotorEx.class, "rampmotor");
         crServofrontR = hardwareMap.get(CRServo.class, "crServofrontR");
         GateServo = hardwareMap.get(Servo.class, "GateServo");
 
+        // Set motor directions
+        rightFront.setDirection(DcMotor.Direction.REVERSE);
+        rightRear.setDirection(DcMotor.Direction.REVERSE);
+        leftRear.setDirection(DcMotor.Direction.FORWARD);
+        leftFront.setDirection(DcMotor.Direction.FORWARD);
 
-        aprilTag = new AprilTagProcessor.Builder().build();
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .addProcessor(aprilTag)
-                .build();
+        ShooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        ShooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        ShooterMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        ShooterMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backRight.setDirection(DcMotor.Direction.REVERSE);
-        RampMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RampMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RampMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
-        RampMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
-        IntakeMotorLeft.setDirection(DcMotor.Direction.REVERSE);
-        crServobackL.setDirection(DcMotorSimple.Direction.FORWARD);
+        rampmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rampmotor.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        IntakeMotor.setDirection(DcMotor.Direction.FORWARD);
+        IntakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         crServofrontR.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
-            // --- 1. RAMP VELOCITY TUNING (Gamepad 2) ---
+
+            // --- 1. SHOOTER VELOCITY TUNING (Gamepad 2) ---
             if (gamepad2.dpad_up && !dpadUpPressed) {
-                currentRampTarget += VELOCITY_STEP;
+                currentShooterTarget += VELOCITY_STEP;
             }
             if (gamepad2.dpad_down && !dpadDownPressed) {
-                currentRampTarget -= VELOCITY_STEP;
+                currentShooterTarget -= VELOCITY_STEP;
             }
             dpadUpPressed = gamepad2.dpad_up;
             dpadDownPressed = gamepad2.dpad_down;
 
             // Keep velocity within safe bounds
-            currentRampTarget = Range.clip(currentRampTarget, 0, MAX_VELOCITY);
+            currentShooterTarget = Range.clip(currentShooterTarget, 0, MAX_VELOCITY);
 
-            // Apply constant velocity
-            RampMotor1.setVelocity(currentRampTarget);
-            RampMotor2.setVelocity(currentRampTarget);
+            // Apply constant velocity to shooter motors
+            ShooterMotor1.setVelocity(currentShooterTarget);
+            ShooterMotor2.setVelocity(currentShooterTarget);
 
-            // --- 2. VISION DETECTION ---
-            boolean tagFound = false;
-            AprilTagDetection targetTag = null;
-            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-            if (!currentDetections.isEmpty()) {
-                targetTag = currentDetections.get(0);
-                tagFound = true;
-            }
+            // Run ramp motor at constant velocity
+            rampmotor.setVelocity(RAMP_VELOCITY);
 
-            // --- 3. DRIVETRAIN & ALIGNMENT (Gamepad 1) ---
+            // --- 2. DRIVETRAIN CONTROL (Gamepad 1) ---
             double forward = -gamepad1.right_stick_y;
             double strafe = gamepad1.right_stick_x;
-            double turn;
+            double turn = -gamepad1.left_stick_x;
 
-            if (gamepad1.left_trigger > 0.1 && tagFound) {
-                double errorX = 350 - targetTag.center.x;
-                turn = (Math.abs(errorX) > TURN_TOLERANCE_PIXELS) ?
-                        Range.clip(errorX * TURN_GAIN, -MAX_TURN_SPEED, MAX_TURN_SPEED) : 0;
-            } else {
-                turn = -gamepad1.left_stick_x;
-                if (gamepad1.left_bumper) { forward *= 0.5; strafe *= 0.5; turn *= 0.5; }
+            // Slow mode with left bumper
+            if (gamepad1.left_bumper) {
+                forward *= 0.5;
+                strafe *= 0.5;
+                turn *= 0.5;
             }
 
+            // Calculate motor powers for mecanum drive
             double denominator = Math.max(1, Math.abs(forward) + Math.abs(strafe) + Math.abs(turn));
-            frontLeft.setPower((forward + strafe + turn) / denominator);
-            backLeft.setPower((forward - strafe + turn) / denominator);
-            frontRight.setPower((forward - strafe - turn) / denominator);
-            backRight.setPower((forward + strafe - turn) / denominator);
+            leftFront.setPower((forward + strafe + turn) / denominator);
+            leftRear.setPower((forward - strafe + turn) / denominator);
+            rightFront.setPower((forward - strafe - turn) / denominator);
+            rightRear.setPower((forward + strafe - turn) / denominator);
 
-            // --- 4. GAMEPAD 1 SPECIAL BUTTONS ---
+            // --- 3. GAMEPAD 1 SPECIAL BUTTONS ---
             if (gamepad1.b) {
-                IntakeMotorLeft.setPower(0);
-                IntakeMotorRight.setPower(0);
-                crServobackL.setPower(0);
+                // STOP ALL
+                IntakeMotor.setVelocity(0);
+                rampmotor.setVelocity(0);
                 crServofrontR.setPower(0);
                 GateServo.setPosition(0.1);
             }
             else if (gamepad1.x) {
+                // SHOOTING MODE
                 GateServo.setPosition(0.5);
-                IntakeMotorLeft.setPower(1.0);
-                IntakeMotorRight.setPower(1.0);
-                crServobackL.setPower(-1.0);
+                rampmotor.setVelocity(RAMP_VELOCITY);
+                IntakeMotor.setVelocity(INTAKE_VELOCITY);
                 crServofrontR.setPower(-1.0);
             }
             else {
-                // --- 5. MANUAL CONTROLS (Gamepad 2) ---
+                // --- 4. MANUAL CONTROLS (Gamepad 2) ---
                 if (gamepad2.a) GateServo.setPosition(0.5);
                 else if (gamepad2.b) GateServo.setPosition(0.1);
                 else GateServo.setPosition(0.1);
 
                 double manualIntake = -gamepad2.left_stick_y;
-                IntakeMotorLeft.setPower(manualIntake);
-                IntakeMotorRight.setPower(manualIntake);
-                crServobackL.setPower(-manualIntake);
+
+                // Manual intake control
+                IntakeMotor.setVelocity(manualIntake * INTAKE_VELOCITY);
+                rampmotor.setVelocity(-manualIntake * RAMP_VELOCITY);
                 crServofrontR.setPower(-manualIntake);
 
                 double manualShuffle = gamepad2.right_stick_y;
-                crServobackL.setPower(manualShuffle);
+                rampmotor.setVelocity(manualShuffle * RAMP_VELOCITY);
                 crServofrontR.setPower(manualShuffle);
             }
 
-            // --- 6. TELEMETRY ---
-            telemetry.addData("Target Ramp Velocity", currentRampTarget);
-            telemetry.addData("Actual Ramp Vel", RampMotor1.getVelocity());
+            // --- 5. TELEMETRY ---
+            telemetry.addData("Target Shooter Velocity", currentShooterTarget);
+            telemetry.addData("Actual Shooter Vel", ShooterMotor1.getVelocity());
+            telemetry.addData("Ramp Motor Vel", rampmotor.getVelocity());
+            telemetry.addData("Intake Velocity", IntakeMotor.getVelocity());
             telemetry.addData("Shooting", gamepad1.x ? "YES" : "NO");
+            telemetry.addData("Slow Mode", gamepad1.left_bumper ? "ON" : "OFF");
 
             telemetry.update();
         }
-        visionPortal.close();
     }
 }
