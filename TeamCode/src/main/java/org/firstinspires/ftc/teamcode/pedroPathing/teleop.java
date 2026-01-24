@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -8,6 +11,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
+
+import java.util.List;
+
 @TeleOp(name = "teleop")
 public class teleop extends LinearOpMode {
     // Drivetrain motors
@@ -16,11 +22,21 @@ public class teleop extends LinearOpMode {
     // Intake and shooter motors
     private DcMotorEx IntakeMotor;
     private DcMotorEx ShooterMotor1, ShooterMotor2;
-    private DcMotorEx rampmotor;  // New ramp motor
+    private DcMotorEx rampmotor;
 
     // Servos
     private CRServo crServofrontR;
     private Servo GateServo;
+
+    // Limelight vision
+    private Limelight3A limelight;
+
+    // --- April Tag Alignment Constants ---
+    private static final int TARGET_TAG_ID = 20;
+    private static final double ALIGNMENT_TOLERANCE = 2.0;  // Degrees
+    private static final double ALIGNMENT_TURN_POWER = 0.3;
+    private static final double ALIGNMENT_SLOW_POWER = 0.15;
+    private static final double ALIGNMENT_SLOW_ZONE = 10.0;
 
     // --- Shooter Velocity Variables ---
     private double currentShooterTarget = 1600.0;
@@ -59,6 +75,9 @@ public class teleop extends LinearOpMode {
         crServofrontR = hardwareMap.get(CRServo.class, "crServofrontR");
         GateServo = hardwareMap.get(Servo.class, "GateServo");
 
+        // Initialize Limelight
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
         // Set motor directions
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.REVERSE);
@@ -77,6 +96,10 @@ public class teleop extends LinearOpMode {
         IntakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         crServofrontR.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Start Limelight
+        limelight.pipelineSwitch(0);  // Make sure pipeline 0 is set to AprilTags
+        limelight.start();
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -105,16 +128,59 @@ public class teleop extends LinearOpMode {
             // Run ramp motor at constant velocity
             rampmotor.setVelocity(RAMP_VELOCITY);
 
-            // --- 2. DRIVETRAIN CONTROL (Gamepad 1) ---
+            // --- 2. DRIVETRAIN CONTROL ---
             double forward = -gamepad1.right_stick_y;
             double strafe = gamepad1.right_stick_x;
             double turn = -gamepad1.left_stick_x;
 
-            // Slow mode with left bumper
+            // Check if alignment mode is active (left bumper held)
             if (gamepad1.left_bumper) {
-                forward *= 0.5;
-                strafe *= 0.5;
-                turn *= 0.5;
+                // AUTO-ALIGNMENT MODE
+                LLResult result = limelight.getLatestResult();
+                boolean aligned = false;
+
+                if (result != null && result.isValid()) {
+                    List<FiducialResult> tags = result.getFiducialResults();
+
+                    for (FiducialResult tag : tags) {
+                        if (tag.getFiducialId() == TARGET_TAG_ID) {
+                            double xOffset = tag.getTargetXDegrees();
+
+                            telemetry.addData("Alignment", "Tag Found - Offset: %.2f deg", xOffset);
+
+                            if (Math.abs(xOffset) < ALIGNMENT_TOLERANCE) {
+                                // CENTERED!
+                                turn = 0;
+                                aligned = true;
+                                telemetry.addData("Status", "ALIGNED!");
+                            } else {
+                                // Calculate turn power based on distance
+                                double turnPower;
+                                if (Math.abs(xOffset) < ALIGNMENT_SLOW_ZONE) {
+                                    turnPower = ALIGNMENT_SLOW_POWER;
+                                    telemetry.addData("Status", "Fine tuning...");
+                                } else {
+                                    turnPower = ALIGNMENT_TURN_POWER;
+                                    telemetry.addData("Status", "Aligning...");
+                                }
+
+                                // Override turn input for alignment
+                                if (xOffset > 0) {
+                                    turn = turnPower;  // Turn right
+                                } else {
+                                    turn = -turnPower; // Turn left
+                                }
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!aligned && turn == -gamepad1.left_stick_x) {
+                        telemetry.addData("Alignment", "Tag #%d not found", TARGET_TAG_ID);
+                    }
+                } else {
+                    telemetry.addData("Alignment", "No vision data");
+                }
             }
 
             // Calculate motor powers for mecanum drive
@@ -163,9 +229,12 @@ public class teleop extends LinearOpMode {
             telemetry.addData("Ramp Motor Vel", rampmotor.getVelocity());
             telemetry.addData("Intake Velocity", IntakeMotor.getVelocity());
             telemetry.addData("Shooting", gamepad1.x ? "YES" : "NO");
-            telemetry.addData("Slow Mode", gamepad1.left_bumper ? "ON" : "OFF");
+            telemetry.addData("Alignment Mode", gamepad1.left_bumper ? "ACTIVE" : "OFF");
 
             telemetry.update();
         }
+
+        // Cleanup
+        limelight.stop();
     }
 }
