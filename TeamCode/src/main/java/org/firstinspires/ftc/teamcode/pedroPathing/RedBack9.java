@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.autonomous;
+package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -10,11 +10,9 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-
-@Autonomous(name = "Red BACK 12 Artifact", group = "Autonomous")
+@Autonomous(name = "Red BACK 9 Artifact", group = "Autonomous")
 @Configurable
-public class RedBack12 extends OpMode {
+public class RedBack9 extends OpMode {
     private TelemetryManager panelsTelemetry;
     public Follower follower;
     private int pathState = 0;
@@ -26,7 +24,7 @@ public class RedBack12 extends OpMode {
 
         follower = Constants.createFollower(hardwareMap);
 
-        // Starting Pose from exported code
+        // Starting Pose
         follower.setStartingPose(new Pose(72, 8, Math.toRadians(90)));
 
         paths = new Paths(follower);
@@ -44,13 +42,13 @@ public class RedBack12 extends OpMode {
         panelsTelemetry.debug("Path State", pathState);
         panelsTelemetry.debug("X", follower.getPose().getX());
         panelsTelemetry.debug("Y", follower.getPose().getY());
-        panelsTelemetry.debug("Heading (Deg)", Math.toDegrees(follower.getPose().getHeading()));
+        panelsTelemetry.debug("Heading", follower.getPose().getHeading());
         panelsTelemetry.update(telemetry);
     }
 
     public void autonomousPathUpdate() {
         switch (pathState) {
-            case 0:
+            case 0: // Shoot Preload
                 follower.followPath(paths.ShootPreloaded, true);
                 pathState = 1;
                 break;
@@ -62,13 +60,13 @@ public class RedBack12 extends OpMode {
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectingFirst3, true);
+                    follower.followPath(paths.CollectFirst3, true);
                     pathState = 3;
                 }
                 break;
             case 3:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.GoBack, true);
+                    follower.followPath(paths.ShootFirst3, true);
                     pathState = 4;
                 }
                 break;
@@ -80,52 +78,33 @@ public class RedBack12 extends OpMode {
                 break;
             case 5:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectingSecond3, true);
+                    follower.followPath(paths.CollectSecond3, true);
                     pathState = 6;
                 }
                 break;
             case 6:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.GoFrontShooting, true);
+                    follower.followPath(paths.ShootSecond3, true);
                     pathState = 7;
                 }
                 break;
             case 7:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ToThird3, true);
+                    follower.followPath(paths.LeavePoints, true);
                     pathState = 8;
                 }
                 break;
             case 8:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectingThird3, true);
-                    pathState = 9;
-                }
-                break;
-            case 9:
-                if (!follower.isBusy()) {
-                    follower.followPath(paths.GoFrontShoot, true);
-                    pathState = 10;
-                }
-                break;
-            case 10:
-                if (!follower.isBusy()) {
-                    follower.followPath(paths.LeavePoints, true);
-                    pathState = 11;
-                }
-                break;
-            case 11:
-                if (!follower.isBusy()) {
-                    pathState = 12; // Finished
+                    pathState = 9; // Finished
                 }
                 break;
         }
     }
 
     public static class Paths {
-        public PathChain ShootPreloaded, ToFirst3, CollectingFirst3, GoBack, ToSecond3,
-                CollectingSecond3, GoFrontShooting, ToThird3, CollectingThird3,
-                GoFrontShoot, LeavePoints;
+        public PathChain ShootPreloaded, ToFirst3, CollectFirst3, ShootFirst3,
+                ToSecond3, CollectSecond3, ShootSecond3, LeavePoints;
 
         public Paths(Follower follower) {
             ShootPreloaded = follower.pathBuilder().addPath(
@@ -136,41 +115,29 @@ public class RedBack12 extends OpMode {
                             new BezierLine(new Pose(88.000, 8.000), new Pose(102.144, 34.409)))
                     .setLinearHeadingInterpolation(Math.toRadians(72), Math.toRadians(180)).build();
 
-            CollectingFirst3 = follower.pathBuilder().addPath(
+            CollectFirst3 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(102.144, 34.409), new Pose(133.829, 34.409)))
                     .setTangentHeadingInterpolation().setReversed().build();
 
-            GoBack = follower.pathBuilder().addPath(
+            ShootFirst3 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(133.829, 34.409), new Pose(88.000, 8.000)))
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(72)).build();
 
             ToSecond3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(88.000, 8.000), new Pose(102.144, 59.177)))
-                    .setLinearHeadingInterpolation(Math.toRadians(72), Math.toRadians(180)).setReversed().build();
+                            new BezierLine(new Pose(88.000, 8.000), new Pose(132.227, 7.851)))
+                    .setLinearHeadingInterpolation(Math.toRadians(72), Math.toRadians(180)).build();
 
-            CollectingSecond3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(102.144, 59.177), new Pose(133.829, 59.177)))
+            CollectSecond3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(132.227, 7.851), new Pose(135.000, 7.851)))
                     .setTangentHeadingInterpolation().setReversed().build();
 
-            GoFrontShooting = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(133.829, 59.177), new Pose(82.000, 81.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(52)).setReversed().build();
-
-            ToThird3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(82.000, 81.000), new Pose(102.144, 83.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(52), Math.toRadians(180)).setReversed().build();
-
-            CollectingThird3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(102.144, 83.000), new Pose(129.000, 83.000)))
-                    .setTangentHeadingInterpolation().setReversed().build();
-
-            GoFrontShoot = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(129.000, 83.000), new Pose(82.000, 81.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(52)).build();
+            ShootSecond3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(135.000, 7.851), new Pose(88.000, 8.000)))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(72)).build();
 
             LeavePoints = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(82.000, 81.000), new Pose(82.481, 30.746)))
-                    .setLinearHeadingInterpolation(Math.toRadians(52), Math.toRadians(52)).build();
+                            new BezierLine(new Pose(88.000, 8.000), new Pose(108.923, 10.000)))
+                    .setLinearHeadingInterpolation(Math.toRadians(72), Math.toRadians(180)).build();
         }
     }
 }

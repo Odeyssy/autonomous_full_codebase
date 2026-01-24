@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.autonomous;
+package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -10,25 +10,24 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-
-@Autonomous(name = "Red FRONT 12", group = "Autonomous")
-@Configurable // Panels
-public class RedFront12 extends OpMode {
-    private TelemetryManager panelsTelemetry; // Panels Telemetry instance
-    public Follower follower; // Pedro Pathing follower instance
-    private int pathState = 0; // Current autonomous path state (state machine)
-    private Paths paths; // Paths defined in the Paths class
+@Autonomous(name = "Red BACK 12 Artifact", group = "Autonomous")
+@Configurable
+public class RedBack12 extends OpMode {
+    private TelemetryManager panelsTelemetry;
+    public Follower follower;
+    private int pathState = 0;
+    private Paths paths;
 
     @Override
     public void init() {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
 
         follower = Constants.createFollower(hardwareMap);
-        // Updated starting pose as per retrofit requirements
+
+        // Starting Pose from exported code
         follower.setStartingPose(new Pose(72, 8, Math.toRadians(90)));
 
-        paths = new Paths(follower); // Build paths
+        paths = new Paths(follower);
 
         panelsTelemetry.debug("Status", "Initialized");
         panelsTelemetry.update(telemetry);
@@ -36,10 +35,10 @@ public class RedFront12 extends OpMode {
 
     @Override
     public void loop() {
-        follower.update(); // Update Pedro Pathing
-        autonomousPathUpdate(); // Update autonomous state machine
+        follower.update();
+        autonomousPathUpdate();
 
-        // Log values to Panels and Driver Station
+        // Debugging values
         panelsTelemetry.debug("Path State", pathState);
         panelsTelemetry.debug("X", follower.getPose().getX());
         panelsTelemetry.debug("Y", follower.getPose().getY());
@@ -47,9 +46,6 @@ public class RedFront12 extends OpMode {
         panelsTelemetry.update(telemetry);
     }
 
-    /**
-     * State machine to sequence through the paths.
-     */
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
@@ -64,13 +60,13 @@ public class RedFront12 extends OpMode {
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectFirst3, true);
+                    follower.followPath(paths.CollectingFirst3, true);
                     pathState = 3;
                 }
                 break;
             case 3:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ShootFirst3, true);
+                    follower.followPath(paths.GoBack, true);
                     pathState = 4;
                 }
                 break;
@@ -82,13 +78,13 @@ public class RedFront12 extends OpMode {
                 break;
             case 5:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectSecond3, true);
+                    follower.followPath(paths.CollectingSecond3, true);
                     pathState = 6;
                 }
                 break;
             case 6:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ShootSecond3, true);
+                    follower.followPath(paths.GoFrontShooting, true);
                     pathState = 7;
                 }
                 break;
@@ -100,13 +96,13 @@ public class RedFront12 extends OpMode {
                 break;
             case 8:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectThird3, true);
+                    follower.followPath(paths.CollectingThird3, true);
                     pathState = 9;
                 }
                 break;
             case 9:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ShootThird3, true);
+                    follower.followPath(paths.GoFrontShoot, true);
                     pathState = 10;
                 }
                 break;
@@ -125,54 +121,54 @@ public class RedFront12 extends OpMode {
     }
 
     public static class Paths {
-        public PathChain ShootPreloaded, ToFirst3, CollectFirst3, ShootFirst3,
-                ToSecond3, CollectSecond3, ShootSecond3,
-                ToThird3, CollectThird3, ShootThird3, LeavePoints;
+        public PathChain ShootPreloaded, ToFirst3, CollectingFirst3, GoBack, ToSecond3,
+                CollectingSecond3, GoFrontShooting, ToThird3, CollectingThird3,
+                GoFrontShoot, LeavePoints;
 
         public Paths(Follower follower) {
             ShootPreloaded = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(123.000, 123.000), new Pose(82.000, 81.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(217), Math.toRadians(45)).build();
+                            new BezierLine(new Pose(88.000, 8.000), new Pose(88.000, 8.000)))
+                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(72)).build();
 
             ToFirst3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(82.000, 81.000), new Pose(109.835, 83.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(180)).build();
+                            new BezierLine(new Pose(88.000, 8.000), new Pose(102.144, 34.409)))
+                    .setLinearHeadingInterpolation(Math.toRadians(72), Math.toRadians(180)).build();
 
-            CollectFirst3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(109.835, 83.000), new Pose(128.000, 83.000)))
+            CollectingFirst3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(102.144, 34.409), new Pose(133.829, 34.409)))
                     .setTangentHeadingInterpolation().setReversed().build();
 
-            ShootFirst3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(128.000, 83.000), new Pose(82.000, 81.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(45)).build();
-
-            ToSecond3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(82.000, 81.000), new Pose(109.304, 59.177)))
-                    .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(180)).build();
-
-            CollectSecond3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(109.304, 59.177), new Pose(130.647, 58.912)))
-                    .setTangentHeadingInterpolation().setReversed().build();
-
-            ShootSecond3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(130.647, 58.912), new Pose(82.000, 81.265)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(45)).build();
-
-            ToThird3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(82.000, 81.265), new Pose(109.039, 35.205)))
-                    .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(180)).build();
-
-            CollectThird3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(109.039, 35.205), new Pose(130.912, 34.674)))
-                    .setTangentHeadingInterpolation().setReversed().build();
-
-            ShootThird3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(130.912, 34.674), new Pose(88.000, 8.000)))
+            GoBack = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(133.829, 34.409), new Pose(88.000, 8.000)))
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(72)).build();
 
+            ToSecond3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(88.000, 8.000), new Pose(102.144, 59.177)))
+                    .setLinearHeadingInterpolation(Math.toRadians(72), Math.toRadians(180)).setReversed().build();
+
+            CollectingSecond3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(102.144, 59.177), new Pose(133.829, 59.177)))
+                    .setTangentHeadingInterpolation().setReversed().build();
+
+            GoFrontShooting = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(133.829, 59.177), new Pose(82.000, 81.000)))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(52)).setReversed().build();
+
+            ToThird3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(82.000, 81.000), new Pose(102.144, 83.000)))
+                    .setLinearHeadingInterpolation(Math.toRadians(52), Math.toRadians(180)).setReversed().build();
+
+            CollectingThird3 = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(102.144, 83.000), new Pose(129.000, 83.000)))
+                    .setTangentHeadingInterpolation().setReversed().build();
+
+            GoFrontShoot = follower.pathBuilder().addPath(
+                            new BezierLine(new Pose(129.000, 83.000), new Pose(82.000, 81.000)))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(52)).build();
+
             LeavePoints = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(88.000, 8.000), new Pose(108.923, 10.000)))
-                    .setTangentHeadingInterpolation().build();
+                            new BezierLine(new Pose(82.000, 81.000), new Pose(82.481, 30.746)))
+                    .setLinearHeadingInterpolation(Math.toRadians(52), Math.toRadians(52)).build();
         }
     }
 }
