@@ -47,7 +47,7 @@ public class teleop extends LinearOpMode {
     private final double INTAKE_VELOCITY = 2800.0;
 
     // --- Ramp Motor Velocity ---
-    private final double RAMP_VELOCITY = 1500.0;
+    private final double RAMP_VELOCITY = 900.0;
 
     // --- Button State Tracking ---
     private boolean dpadUpPressed = false;
@@ -72,6 +72,7 @@ public class teleop extends LinearOpMode {
         ShooterMotor1 = hardwareMap.get(DcMotorEx.class, "ShooterMotor1");
         ShooterMotor2 = hardwareMap.get(DcMotorEx.class, "ShooterMotor2");
         rampmotor = hardwareMap.get(DcMotorEx.class, "rampmotor");
+        rampmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         crServofrontR = hardwareMap.get(CRServo.class, "crServofrontR");
         GateServo = hardwareMap.get(Servo.class, "GateServo");
 
@@ -90,7 +91,7 @@ public class teleop extends LinearOpMode {
         ShooterMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
 
         rampmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rampmotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        rampmotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         IntakeMotor.setDirection(DcMotor.Direction.FORWARD);
         IntakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -129,8 +130,8 @@ public class teleop extends LinearOpMode {
             rampmotor.setVelocity(RAMP_VELOCITY);
 
             // --- 2. DRIVETRAIN CONTROL ---
-            double forward = -gamepad1.right_stick_y;
-            double strafe = gamepad1.right_stick_x;
+            double forward = gamepad1.right_stick_y;
+            double strafe = -gamepad1.right_stick_x;
             double turn = -gamepad1.left_stick_x;
 
             // Check if alignment mode is active (left bumper held)
@@ -166,9 +167,9 @@ public class teleop extends LinearOpMode {
 
                                 // Override turn input for alignment
                                 if (xOffset > 0) {
-                                    turn = turnPower;  // Turn right
+                                    turn = -turnPower;  // Turn right
                                 } else {
-                                    turn = -turnPower; // Turn left
+                                    turn = turnPower; // Turn left
                                 }
                             }
                             break;
