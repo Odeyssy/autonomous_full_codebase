@@ -66,7 +66,8 @@ public class samplemultipath extends OpMode {
             case 2: // Wait for P2, Move to P3
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path3, true);
-                    pathState = 3;
+                    //shooting code
+                    pathState = 51;
                 }
                 break;
             case 3: // Wait for P3, Move to P4
