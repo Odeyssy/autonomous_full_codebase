@@ -1,5 +1,4 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
-
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
@@ -26,14 +25,16 @@ public class teleop extends LinearOpMode {
 
     // Servos
     private CRServo crServofrontR;
+    private CRServo crServobackR;
     private Servo GateServo;
 
     // Limelight vision
     private Limelight3A limelight;
 
     // --- April Tag Alignment Constants ---
-    private static final int TARGET_TAG_ID = 20;
-    private static final double ALIGNMENT_TOLERANCE = 2.0;  // Degrees
+    private static final int TARGET_TAG_ID_BLUE = 20;
+    private static final int TARGET_TAG_ID_RED = 24;
+    private static final double ALIGNMENT_TOLERANCE = 1.0;  // Degrees
     private static final double ALIGNMENT_TURN_POWER = 0.3;
     private static final double ALIGNMENT_SLOW_POWER = 0.15;
     private static final double ALIGNMENT_SLOW_ZONE = 10.0;
@@ -47,7 +48,7 @@ public class teleop extends LinearOpMode {
     private final double INTAKE_VELOCITY = 2800.0;
 
     // --- Ramp Motor Velocity ---
-    private final double RAMP_VELOCITY = 900.0;
+    private final double RAMP_VELOCITY = 850.0;
 
     // --- Button State Tracking ---
     private boolean dpadUpPressed = false;
@@ -74,6 +75,7 @@ public class teleop extends LinearOpMode {
         rampmotor = hardwareMap.get(DcMotorEx.class, "rampmotor");
         rampmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         crServofrontR = hardwareMap.get(CRServo.class, "crServofrontR");
+        crServobackR = hardwareMap.get(CRServo.class, "crServobackR");
         GateServo = hardwareMap.get(Servo.class, "GateServo");
 
         // Initialize Limelight
@@ -97,6 +99,7 @@ public class teleop extends LinearOpMode {
         IntakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         crServofrontR.setDirection(DcMotorSimple.Direction.REVERSE);
+        crServobackR.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Start Limelight
         limelight.pipelineSwitch(0);  // Make sure pipeline 0 is set to AprilTags
@@ -107,7 +110,7 @@ public class teleop extends LinearOpMode {
 
         waitForStart();
 
-        while (opModeIsActive()) {
+        while ( opModeIsActive()) {
 
             // --- 1. SHOOTER VELOCITY TUNING (Gamepad 2) ---
             if (gamepad2.dpad_up && !dpadUpPressed) {
@@ -144,7 +147,7 @@ public class teleop extends LinearOpMode {
                     List<FiducialResult> tags = result.getFiducialResults();
 
                     for (FiducialResult tag : tags) {
-                        if (tag.getFiducialId() == TARGET_TAG_ID) {
+                        if (tag.getFiducialId() == TARGET_TAG_ID_BLUE || tag.getFiducialId() == TARGET_TAG_ID_RED) {
                             double xOffset = tag.getTargetXDegrees();
 
                             telemetry.addData("Alignment", "Tag Found - Offset: %.2f deg", xOffset);
@@ -177,7 +180,7 @@ public class teleop extends LinearOpMode {
                     }
 
                     if (!aligned && turn == -gamepad1.left_stick_x) {
-                        telemetry.addData("Alignment", "Tag #%d not found", TARGET_TAG_ID);
+                        telemetry.addData("Alignment", "Tag #%d not found");
                     }
                 } else {
                     telemetry.addData("Alignment", "No vision data");
@@ -197,14 +200,18 @@ public class teleop extends LinearOpMode {
                 IntakeMotor.setVelocity(0);
                 rampmotor.setVelocity(0);
                 crServofrontR.setPower(0);
+                crServobackR.setPower(0);
                 GateServo.setPosition(0.1);
             }
             else if (gamepad1.x) {
                 // SHOOTING MODE
-                GateServo.setPosition(0.5);
                 rampmotor.setVelocity(RAMP_VELOCITY);
                 IntakeMotor.setVelocity(INTAKE_VELOCITY);
-                crServofrontR.setPower(-1.0);
+                GateServo.setPosition(0.5);
+                crServofrontR.setPower(1.0);
+                crServobackR.setPower(-1.0);
+
+
             }
             else {
                 // --- 4. MANUAL CONTROLS (Gamepad 2) ---
@@ -218,10 +225,13 @@ public class teleop extends LinearOpMode {
                 IntakeMotor.setVelocity(manualIntake * INTAKE_VELOCITY);
                 rampmotor.setVelocity(-manualIntake * RAMP_VELOCITY);
                 crServofrontR.setPower(-manualIntake);
+                crServobackR.setPower(-manualIntake);
 
                 double manualShuffle = gamepad2.right_stick_y;
                 rampmotor.setVelocity(manualShuffle * RAMP_VELOCITY);
                 crServofrontR.setPower(manualShuffle);
+                crServobackR.setPower(-manualShuffle);
+
             }
 
             // --- 5. TELEMETRY ---
