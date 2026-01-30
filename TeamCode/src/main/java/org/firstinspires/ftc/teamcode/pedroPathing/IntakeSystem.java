@@ -11,7 +11,8 @@ public class IntakeSystem {
     // Hardware components
     private DcMotorEx intakeMotor;
     private DcMotorEx rampMotor;
-    private CRServo crServo;
+    private CRServo crServofrontR;
+    private CRServo crServobackR; // New Servo
 
     // Velocity constants
     private double intakeVelocity;
@@ -21,7 +22,7 @@ public class IntakeSystem {
      * Constructor with default velocities
      */
     public IntakeSystem(HardwareMap hardwareMap) {
-        this(hardwareMap, 2800.0, 1500.0);
+        this(hardwareMap, 2800.0, 850.0);
     }
 
     /**
@@ -34,7 +35,8 @@ public class IntakeSystem {
         // Initialize hardware
         intakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor");
         rampMotor = hardwareMap.get(DcMotorEx.class, "rampmotor");
-        crServo = hardwareMap.get(CRServo.class, "crServofrontR");
+        crServofrontR = hardwareMap.get(CRServo.class, "crServofrontR");
+        crServobackR = hardwareMap.get(CRServo.class, "crServobackR"); // Initialize new servo
 
         // Set motor modes and directions
         intakeMotor.setDirection(DcMotor.Direction.FORWARD);
@@ -43,7 +45,9 @@ public class IntakeSystem {
         rampMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rampMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        crServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        // Directions based on your TeleOp: Front is REVERSE, Back is FORWARD
+        crServofrontR.setDirection(DcMotorSimple.Direction.REVERSE);
+        crServobackR.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     /**
@@ -52,7 +56,9 @@ public class IntakeSystem {
     public void runIntake() {
         intakeMotor.setVelocity(intakeVelocity);
         rampMotor.setVelocity(rampVelocity);
-        crServo.setPower(-1.0);
+        // Syncing power based on your TeleOp logic
+        crServofrontR.setPower(-1.0);
+        crServobackR.setPower(1.0);
     }
 
     /**
@@ -61,7 +67,8 @@ public class IntakeSystem {
     public void stopAll() {
         intakeMotor.setVelocity(0);
         rampMotor.setVelocity(0);
-        crServo.setPower(0);
+        crServofrontR.setPower(0);
+        crServobackR.setPower(0);
     }
 
     // Getters for telemetry
@@ -73,8 +80,12 @@ public class IntakeSystem {
         return rampMotor.getVelocity();
     }
 
-    public double getCRServoPower() {
-        return crServo.getPower();
+    public double getFrontCRServoPower() {
+        return crServofrontR.getPower();
+    }
+
+    public double getBackCRServoPower() {
+        return crServobackR.getPower();
     }
 
     // Setters for customization
@@ -86,4 +97,3 @@ public class IntakeSystem {
         this.rampVelocity = velocity;
     }
 }
-//

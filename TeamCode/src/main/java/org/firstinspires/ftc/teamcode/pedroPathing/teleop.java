@@ -34,7 +34,7 @@ public class teleop extends LinearOpMode {
     // --- April Tag Alignment Constants ---
     private static final int TARGET_TAG_ID_BLUE = 20;
     private static final int TARGET_TAG_ID_RED = 24;
-    private static final double ALIGNMENT_TOLERANCE = 1.0;  // Degrees
+    private static final double ALIGNMENT_TOLERANCE = 1;  // Degrees
     private static final double ALIGNMENT_TURN_POWER = 0.3;
     private static final double ALIGNMENT_SLOW_POWER = 0.15;
     private static final double ALIGNMENT_SLOW_ZONE = 10.0;
@@ -45,7 +45,7 @@ public class teleop extends LinearOpMode {
     private final double MAX_VELOCITY = 2800.0;
 
     // --- Intake Velocity Variable ---
-    private final double INTAKE_VELOCITY = 2800.0;
+    private final double INTAKE_VELOCITY = 5000.0;
 
     // --- Ramp Motor Velocity ---
     private final double RAMP_VELOCITY = 850.0;
@@ -130,7 +130,7 @@ public class teleop extends LinearOpMode {
             ShooterMotor2.setVelocity(currentShooterTarget);
 
             // Run ramp motor at constant velocity
-            rampmotor.setVelocity(RAMP_VELOCITY);
+            rampmotor.setVelocity(0);
 
             // --- 2. DRIVETRAIN CONTROL ---
             double forward = gamepad1.right_stick_y;
@@ -148,7 +148,7 @@ public class teleop extends LinearOpMode {
 
                     for (FiducialResult tag : tags) {
                         if (tag.getFiducialId() == TARGET_TAG_ID_BLUE || tag.getFiducialId() == TARGET_TAG_ID_RED) {
-                            double xOffset = tag.getTargetXDegrees();
+                            double xOffset = tag.getTargetXDegrees()-3;
 
                             telemetry.addData("Alignment", "Tag Found - Offset: %.2f deg", xOffset);
 
@@ -205,11 +205,11 @@ public class teleop extends LinearOpMode {
             }
             else if (gamepad1.x) {
                 // SHOOTING MODE
-                rampmotor.setVelocity(RAMP_VELOCITY);
+                rampmotor.setVelocity(-RAMP_VELOCITY);
                 IntakeMotor.setVelocity(INTAKE_VELOCITY);
                 GateServo.setPosition(0.5);
-                crServofrontR.setPower(1.0);
-                crServobackR.setPower(-1.0);
+                crServofrontR.setPower(-1.0);
+                crServobackR.setPower(1.0);
 
 
             }
@@ -223,9 +223,9 @@ public class teleop extends LinearOpMode {
 
                 // Manual intake control
                 IntakeMotor.setVelocity(manualIntake * INTAKE_VELOCITY);
-                rampmotor.setVelocity(-manualIntake * RAMP_VELOCITY);
-                crServofrontR.setPower(-manualIntake);
-                crServobackR.setPower(-manualIntake);
+                //rampmotor.setVelocity(manualIntake * RAMP_VELOCITY);
+                //crServofrontR.setPower(manualIntake);
+                //crServobackR.setPower(manualIntake);
 
                 double manualShuffle = gamepad2.right_stick_y;
                 rampmotor.setVelocity(manualShuffle * RAMP_VELOCITY);
