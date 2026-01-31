@@ -11,7 +11,7 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Red BACK 9 Artifact (WORKING)", group = "Autonomous")
+@Autonomous(name = "Red BACK 6 Artifact (WORKING)", group = "Autonomous")
 @Configurable
 public class RedBack9 extends OpMode {
     private TelemetryManager panelsTelemetry;

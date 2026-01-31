@@ -11,7 +11,7 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "BlueBack9", group = "Autonomous")
+@Autonomous(name = "Blue BACK 6 ARTIFACT (WORKING)", group = "Autonomous")
 @Configurable
 public class BlueBack9 extends OpMode {
     private TelemetryManager panelsTelemetry;
