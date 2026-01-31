@@ -151,7 +151,7 @@ public class RedBack9 extends OpMode {
                     ))
                     .setLinearHeadingInterpolation(
                             Math.toRadians(90),
-                            Math.toRadians(61)
+                            Math.toRadians(65)
                     )
                     .build();
 
@@ -161,7 +161,7 @@ public class RedBack9 extends OpMode {
                             new Pose(88.0, 34.939)
                     ))
                     .setLinearHeadingInterpolation(
-                            Math.toRadians(61),
+                            Math.toRadians(65),
                             Math.toRadians(180)
                     )
                     .build();

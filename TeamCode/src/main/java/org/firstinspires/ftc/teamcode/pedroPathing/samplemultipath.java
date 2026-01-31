@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> 60280b4dfd994cd7e6a159751913f959c8cca7c0
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;

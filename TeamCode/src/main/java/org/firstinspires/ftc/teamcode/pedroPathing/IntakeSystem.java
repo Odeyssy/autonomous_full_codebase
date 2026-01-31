@@ -22,7 +22,7 @@ public class IntakeSystem {
      * Constructor with default velocities
      */
     public IntakeSystem(HardwareMap hardwareMap) {
-        this(hardwareMap, 2800.0, 850.0);
+        this(hardwareMap, 2800.0, 900);
     }
 
     /**
