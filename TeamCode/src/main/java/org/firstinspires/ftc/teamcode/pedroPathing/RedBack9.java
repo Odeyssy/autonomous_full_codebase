@@ -34,7 +34,6 @@ public class RedBack9 extends OpMode {
         intake = new IntakeSystem(hardwareMap);
         limelightAligner = new LimelightAligner(hardwareMap);
         shooter = new ShooterSystem(hardwareMap);
-        shooter.startFlywheels();
         follower.setStartingPose(new Pose(88.0, 8.0, Math.toRadians(90)));
 
         paths = new Paths(follower);
@@ -58,6 +57,7 @@ public class RedBack9 extends OpMode {
         switch (pathState) {
             case 0:
                 // START TURN ONLY (90° → 60°)
+                shooter.startFlywheels();
                 follower.followPath(paths.Path0, true);
                 pathState = 1;
                 break;
