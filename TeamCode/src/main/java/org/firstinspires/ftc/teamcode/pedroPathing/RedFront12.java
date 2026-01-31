@@ -10,6 +10,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "Red FRONT 12 Artifact (TESTING)", group = "Autonomous")
 @Configurable
@@ -18,14 +19,27 @@ public class RedFront12 extends OpMode {
     public Follower follower;
     private int pathState = 0;
     private Paths paths;
+    private ElapsedTime stateTimer = new ElapsedTime();
+
+    // Systems
+    private IntakeSystem intake;
+    private LimelightAligner limelightAligner;
+    private ShooterSystem shooter;
 
     @Override
     public void init() {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         follower = Constants.createFollower(hardwareMap);
+        follower.setMaxPower(0.5);
 
         // Starting pose: (123, 123) facing 217 degrees to match ShootPreloaded start
         follower.setStartingPose(new Pose(123.000, 123.000, Math.toRadians(217)));
+
+        // Initialize systems
+        intake = new IntakeSystem(hardwareMap);
+        limelightAligner = new LimelightAligner(hardwareMap);
+        shooter = new ShooterSystem(hardwareMap);
+        shooter.startFlywheels();
 
         paths = new Paths(follower);
 
@@ -42,6 +56,7 @@ public class RedFront12 extends OpMode {
         panelsTelemetry.debug("X", follower.getPose().getX());
         panelsTelemetry.debug("Y", follower.getPose().getY());
         panelsTelemetry.debug("Heading (Deg)", Math.toDegrees(follower.getPose().getHeading()));
+        panelsTelemetry.debug("Busy", follower.isBusy());
         panelsTelemetry.update(telemetry);
     }
 
@@ -53,6 +68,14 @@ public class RedFront12 extends OpMode {
                 break;
             case 1:
                 if (!follower.isBusy()) {
+                    shooter.shoot();      // shoot preloaded
+                    stateTimer.reset();
+                    pathState = 12;       // new state for timing shooting
+                }
+                break;
+            case 12:
+                if (stateTimer.seconds() > 4.0) {  // allow shooting for 4 seconds
+                    shooter.stopFeeding();
                     follower.followPath(paths.ToFirst3, true);
                     pathState = 2;
                 }
@@ -60,60 +83,73 @@ public class RedFront12 extends OpMode {
             case 2:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.CollectFirst3, true);
+                    intake.runIntake();   // start intake when collecting
                     pathState = 3;
                 }
                 break;
             case 3:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ShootFirst3, true);
+                    intake.stopAll();
+                    shooter.shoot();      // shoot first 3
+                    stateTimer.reset();
+                    pathState = 13;       // new state for timing shooting
+                }
+                break;
+            case 13:
+                if (stateTimer.seconds() > 4.0) {
+                    shooter.stopFeeding();
+                    follower.followPath(paths.ToSecond3, true);
                     pathState = 4;
                 }
                 break;
             case 4:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ToSecond3, true);
+                    follower.followPath(paths.CollectSecond3, true);
+                    intake.runIntake();
                     pathState = 5;
                 }
                 break;
             case 5:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectSecond3, true);
+                    intake.stopAll();
+                    shooter.shoot();      // shoot second 3
+                    stateTimer.reset();
+                    pathState = 14;       // new state for timing shooting
+                }
+                break;
+            case 14:
+                if (stateTimer.seconds() > 4.0) {
+                    shooter.stopFeeding();
+                    follower.followPath(paths.ToThird3, true);
                     pathState = 6;
                 }
                 break;
             case 6:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ShootSecond3, true);
+                    follower.followPath(paths.CollectThird3, true);
+                    intake.runIntake();
                     pathState = 7;
                 }
                 break;
             case 7:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.ToThird3, true);
+                    intake.stopAll();
+                    shooter.shoot();      // shoot third 3
+                    stateTimer.reset();
+                    pathState = 15;
+                }
+                break;
+            case 15:
+                if (stateTimer.seconds() > 4.0) {
+                    shooter.stopFeeding();
+                    follower.followPath(paths.LeavePoints, true);
                     pathState = 8;
                 }
                 break;
             case 8:
                 if (!follower.isBusy()) {
-                    follower.followPath(paths.CollectThird3, true);
-                    pathState = 9;
-                }
-                break;
-            case 9:
-                if (!follower.isBusy()) {
-                    follower.followPath(paths.ShootThird3, true);
-                    pathState = 10;
-                }
-                break;
-            case 10:
-                if (!follower.isBusy()) {
-                    follower.followPath(paths.LeavePoints, true);
-                    pathState = 11;
-                }
-                break;
-            case 11:
-                if (!follower.isBusy()) {
-                    pathState = 12; // Finished
+                    follower.setTeleOpDrive(0, 0, 0);
+                    pathState = 9; // finished
                 }
                 break;
         }
