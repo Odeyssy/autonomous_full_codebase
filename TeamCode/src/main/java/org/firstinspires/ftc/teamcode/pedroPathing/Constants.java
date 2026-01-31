@@ -27,7 +27,7 @@ public class Constants {
             .forwardPodY(182/2.54)               // Now interpreted as -5 INCHES
             .strafePodX(196/2.54)               // Now interpreted as -5 INCHES
             .distanceUnit(DistanceUnit.MM) // Switch this to INCH
-            .hardwareMapName("odo")
+            .hardwareMapName("pinpoint")
             //.encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
             .customEncoderResolution(2000/(2 * Math.PI * 24))
             /* CALCULATION:
