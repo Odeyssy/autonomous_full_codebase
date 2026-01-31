@@ -41,7 +41,7 @@ public class Constants {
                If the TURN TUNER gave you this, plug it in here.
             */
 
-            .yawScalar(0.99703)
+            //
 
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
@@ -65,7 +65,7 @@ public class Constants {
 //            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
 //            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
     public static MecanumConstants driveConstants = new MecanumConstants()
-            .maxPower(1)
+            .maxPower(0.3)
             .rightFrontMotorName("rightFront")
             .rightRearMotorName("rightRear")
             .leftFrontMotorName("leftFront")
@@ -75,7 +75,7 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
            .xVelocity(65.31821856160802)
-          .yVelocity(50.43163245493972);
+           .yVelocity(50.43163245493972);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
