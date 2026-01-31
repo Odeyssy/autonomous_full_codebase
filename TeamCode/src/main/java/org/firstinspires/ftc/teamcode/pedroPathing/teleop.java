@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
+
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
@@ -8,6 +9,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;   // <<< KEPT (only for shooter)
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -34,25 +36,29 @@ public class teleop extends LinearOpMode {
     // --- April Tag Alignment Constants ---
     private static final int TARGET_TAG_ID_BLUE = 20;
     private static final int TARGET_TAG_ID_RED = 24;
-    private static final double ALIGNMENT_TOLERANCE = 1.0;  // Degrees
+    private static final double ALIGNMENT_TOLERANCE = 1;  // Degrees
     private static final double ALIGNMENT_TURN_POWER = 0.3;
     private static final double ALIGNMENT_SLOW_POWER = 0.15;
     private static final double ALIGNMENT_SLOW_ZONE = 10.0;
 
     // --- Shooter Velocity Variables ---
-    private double currentShooterTarget = 1600.0;
+    private double currentShooterTarget = 1600.0;   // ticks/sec; tuned by dpad
     private final double VELOCITY_STEP = 50.0;
     private final double MAX_VELOCITY = 2800.0;
 
     // --- Intake Velocity Variable ---
-    private final double INTAKE_VELOCITY = 2800.0;
+    private final double INTAKE_VELOCITY = 5000.0;  // ticks/sec
 
     // --- Ramp Motor Velocity ---
-    private final double RAMP_VELOCITY = 850.0;
+    private final double RAMP_VELOCITY = 850.0;     // ticks/sec
 
     // --- Button State Tracking ---
     private boolean dpadUpPressed = false;
     private boolean dpadDownPressed = false;
+
+    // --- Shooter PIDF constants ---
+    private static final double SHOOTER_TICKS_PER_REV = 28.0;   // <<< SHOOTER ONLY
+    private static final double SHOOTER_TOLERANCE = 75.0;       // <<< SHOOTER ONLY
 
     @Override
     public void runOpMode() {
@@ -74,6 +80,7 @@ public class teleop extends LinearOpMode {
         ShooterMotor2 = hardwareMap.get(DcMotorEx.class, "ShooterMotor2");
         rampmotor = hardwareMap.get(DcMotorEx.class, "rampmotor");
         rampmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         crServofrontR = hardwareMap.get(CRServo.class, "crServofrontR");
         crServobackR = hardwareMap.get(CRServo.class, "crServobackR");
         GateServo = hardwareMap.get(Servo.class, "GateServo");
@@ -87,11 +94,27 @@ public class teleop extends LinearOpMode {
         leftRear.setDirection(DcMotor.Direction.FORWARD);
         leftFront.setDirection(DcMotor.Direction.FORWARD);
 
+        // --- SHOOTER PIDF SETUP ONLY ---  // <<< SHOOTER ONLY
+        ShooterMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ShooterMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         ShooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ShooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         ShooterMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
         ShooterMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        // Configure shooter PIDF (P + default F) [web:15][web:21]
+        PIDFCoefficients shooterBase = ShooterMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        PIDFCoefficients shooterPIDF = new PIDFCoefficients(
+                15.0,          // P  (tune on bot)
+                0.0,           // I
+                0.0,           // D
+                shooterBase.f  // F from firmware
+        );
+        ShooterMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, shooterPIDF);
+        ShooterMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, shooterPIDF);
+
+        // Intake and ramp stay simple velocity mode (no custom PIDF)  // <<< CHANGED
         rampmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rampmotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -110,7 +133,7 @@ public class teleop extends LinearOpMode {
 
         waitForStart();
 
-        while ( opModeIsActive()) {
+        while (opModeIsActive()) {
 
             // --- 1. SHOOTER VELOCITY TUNING (Gamepad 2) ---
             if (gamepad2.dpad_up && !dpadUpPressed) {
@@ -125,12 +148,19 @@ public class teleop extends LinearOpMode {
             // Keep velocity within safe bounds
             currentShooterTarget = Range.clip(currentShooterTarget, 0, MAX_VELOCITY);
 
-            // Apply constant velocity to shooter motors
+            // Apply target velocity to shooter motors (ticks/sec)
             ShooterMotor1.setVelocity(currentShooterTarget);
             ShooterMotor2.setVelocity(currentShooterTarget);
 
-            // Run ramp motor at constant velocity
-            rampmotor.setVelocity(RAMP_VELOCITY);
+            // Compute "at speed" flag for shooter wheels only  // <<< SHOOTER ONLY
+            double shooterVel1 = ShooterMotor1.getVelocity();
+            double shooterVel2 = ShooterMotor2.getVelocity();
+            boolean shooterAtSpeed =
+                    Math.abs(shooterVel1 - currentShooterTarget) < SHOOTER_TOLERANCE &&
+                            Math.abs(shooterVel2 - currentShooterTarget) < SHOOTER_TOLERANCE;
+
+            // Run ramp motor at base velocity (0 = stopped by default)
+            rampmotor.setVelocity(0);
 
             // --- 2. DRIVETRAIN CONTROL ---
             double forward = gamepad1.right_stick_y;
@@ -148,7 +178,7 @@ public class teleop extends LinearOpMode {
 
                     for (FiducialResult tag : tags) {
                         if (tag.getFiducialId() == TARGET_TAG_ID_BLUE || tag.getFiducialId() == TARGET_TAG_ID_RED) {
-                            double xOffset = tag.getTargetXDegrees();
+                            double xOffset = tag.getTargetXDegrees() - 3;
 
                             telemetry.addData("Alignment", "Tag Found - Offset: %.2f deg", xOffset);
 
@@ -202,18 +232,23 @@ public class teleop extends LinearOpMode {
                 crServofrontR.setPower(0);
                 crServobackR.setPower(0);
                 GateServo.setPosition(0.1);
-            }
-            else if (gamepad1.x) {
-                // SHOOTING MODE
-                rampmotor.setVelocity(RAMP_VELOCITY);
-                IntakeMotor.setVelocity(INTAKE_VELOCITY);
-                GateServo.setPosition(0.5);
-                crServofrontR.setPower(1.0);
-                crServobackR.setPower(-1.0);
-
-
-            }
-            else {
+            } else if (gamepad1.x) {
+                // SHOOTING MODE - only feed when shooter wheels at speed  // <<< SHOOTER ONLY
+                if (shooterAtSpeed) {
+                    rampmotor.setVelocity(-RAMP_VELOCITY);
+                    IntakeMotor.setVelocity(INTAKE_VELOCITY);
+                    GateServo.setPosition(0.5);
+                    crServofrontR.setPower(-1.0);
+                    crServobackR.setPower(1.0);
+                } else {
+                    // spin shooter up but don't feed aggressively
+                    rampmotor.setVelocity(0);
+                    IntakeMotor.setVelocity(0);
+                    GateServo.setPosition(0.1);
+                    crServofrontR.setPower(0);
+                    crServobackR.setPower(0);
+                }
+            } else {
                 // --- 4. MANUAL CONTROLS (Gamepad 2) ---
                 if (gamepad2.a) GateServo.setPosition(0.5);
                 else if (gamepad2.b) GateServo.setPosition(0.1);
@@ -221,22 +256,20 @@ public class teleop extends LinearOpMode {
 
                 double manualIntake = -gamepad2.left_stick_y;
 
-                // Manual intake control
+                // Manual intake control (simple velocity)
                 IntakeMotor.setVelocity(manualIntake * INTAKE_VELOCITY);
-                rampmotor.setVelocity(-manualIntake * RAMP_VELOCITY);
-                crServofrontR.setPower(-manualIntake);
-                crServobackR.setPower(-manualIntake);
 
                 double manualShuffle = gamepad2.right_stick_y;
                 rampmotor.setVelocity(manualShuffle * RAMP_VELOCITY);
                 crServofrontR.setPower(manualShuffle);
                 crServobackR.setPower(-manualShuffle);
-
             }
 
             // --- 5. TELEMETRY ---
-            telemetry.addData("Target Shooter Velocity", currentShooterTarget);
-            telemetry.addData("Actual Shooter Vel", ShooterMotor1.getVelocity());
+            telemetry.addData("Target Shooter Vel (t/s)", currentShooterTarget);
+            telemetry.addData("Shooter1 Vel (t/s)", shooterVel1);
+            telemetry.addData("Shooter2 Vel (t/s)", shooterVel2);
+            telemetry.addData("Shooter At Speed", shooterAtSpeed);
             telemetry.addData("Ramp Motor Vel", rampmotor.getVelocity());
             telemetry.addData("Intake Velocity", IntakeMotor.getVelocity());
             telemetry.addData("Shooting", gamepad1.x ? "YES" : "NO");
