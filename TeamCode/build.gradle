@@ -22,7 +22,12 @@ android {
         jniLibs.useLegacyPackaging true
     }
 }
+repositories {
+    maven { url = 'https://maven.brott.dev/' }
+}
 
 dependencies {
     implementation project(':FtcRobotController')
+    annotationProcessor files('lib/RobotCore-release-sources.jar')
+    implementation 'com.acmerobotics.dashboard:dashboard:0.4.15'
 }
