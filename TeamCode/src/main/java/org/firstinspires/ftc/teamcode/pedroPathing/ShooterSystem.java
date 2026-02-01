@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.acmerobotics.dashboard.config.Config; // Added for Dashboard
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -7,7 +8,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients; // Added for PIDF
 
+@Config // Allows you to tune these values live in FTC Dashboard
 public class ShooterSystem {
     // Hardware
     private DcMotorEx shooterMotor1, shooterMotor2;
@@ -16,15 +19,22 @@ public class ShooterSystem {
     private CRServo crServobackR;
     private Servo gateServo;
 
+    // --- PIDF Coefficients (Public & Static for Dashboard) ---
+    public static double P = 40.0;
+    public static double I = 0.0;
+
+    public static double D = -4.5;
+    public static double F = 12.5;  // Auto-calculates if 0
+
     // Constants from your TeleOp
-    private double currentShooterTarget = 1650.0;
+    public static double currentShooterTarget = 1650.0;
     private final double VELOCITY_STEP = 50.0;
     private final double MAX_VELOCITY = 2800.0;
     private final double RAMP_VELOCITY = 850.0;
 
     // Servo Positions
-    private final double GATE_OPEN = 0.5;
-    private final double GATE_CLOSED = 0.1;
+    public static double GATE_OPEN = 0.5;
+    public static double GATE_CLOSED = 0.1;
 
     public ShooterSystem(HardwareMap hardwareMap) {
         // Initialize Hardware
@@ -41,12 +51,30 @@ public class ShooterSystem {
         shooterMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
         shooterMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
 
+        // Apply PIDF Coefficients to the internal motor controller
+        updatePIDF();
+
         rampMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rampMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rampMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         crServoFrontR.setDirection(DcMotorSimple.Direction.REVERSE);
         crServobackR.setDirection(DcMotorSimple.Direction.FORWARD);
+    }
+
+    /**
+     * Updates the motor controller with current PIDF values.
+     * Can be called repeatedly if tuning live.
+     */
+    public void updatePIDF() {
+        shooterMotor1.setVelocityPIDFCoefficients(P, I, D, F);
+        shooterMotor2.setVelocityPIDFCoefficients(P, I, D, F);
+    }
+
+    public void setPIDF(double p, double i, double d, double f) {
+        this.P = p; this.I = i; this.D = d; this.F = f;
+        shooterMotor1.setVelocityPIDFCoefficients(P, I, D, F);
+        shooterMotor2.setVelocityPIDFCoefficients(P, I, D, F);
     }
 
     /**
@@ -79,12 +107,14 @@ public class ShooterSystem {
         crServobackR.setPower(0);
         gateServo.setPosition(GATE_CLOSED);
     }
+
     public void stopFeeding() {
         gateServo.setPosition(GATE_CLOSED);
         rampMotor.setVelocity(0);
         crServoFrontR.setPower(0);
         crServobackR.setPower(0);
     }
+
     /**
      * Manually adjust the shooter velocity (useful for TeleOp tuning).
      */
