@@ -5,24 +5,34 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.TelemetryManager;
 import com.bylazar.telemetry.PanelsTelemetry;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "BlueFront12", group = "Autonomous")
+@Autonomous(name = "BlueFront6", group = "Autonomous")
 @Configurable
-public class BlueFront12 extends OpMode {
+public class BlueFront6 extends OpMode {
     private TelemetryManager panelsTelemetry;
     public Follower follower;
     private int pathState = 0;
     private Paths paths;
 
+    private IntakeSystem intake;
+    private LimelightAligner limelightAligner;
+    private ShooterSystem shooter;
+    private ElapsedTime stateTimer = new ElapsedTime();
+
     @Override
     public void init() {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         follower = Constants.createFollower(hardwareMap);
+        follower.setMaxPower(0.6);
+
+        intake = new IntakeSystem(hardwareMap);
+        limelightAligner = new LimelightAligner(hardwareMap);
+        shooter = new ShooterSystem(hardwareMap);
 
         // Robot starts at (72, 8)
         follower.setStartingPose(new Pose(72, 8, Math.toRadians(90)));
@@ -42,12 +52,14 @@ public class BlueFront12 extends OpMode {
         panelsTelemetry.debug("X", follower.getPose().getX());
         panelsTelemetry.debug("Y", follower.getPose().getY());
         panelsTelemetry.debug("Heading (Deg)", Math.toDegrees(follower.getPose().getHeading()));
+        panelsTelemetry.debug("Busy", follower.isBusy());
         panelsTelemetry.update(telemetry);
     }
 
     public int autonomousPathUpdate() {
         switch (pathState) {
             case 0:
+                shooter.startFlywheels();
                 follower.followPath(paths.Path1, true);
                 pathState = 1;
                 break;
