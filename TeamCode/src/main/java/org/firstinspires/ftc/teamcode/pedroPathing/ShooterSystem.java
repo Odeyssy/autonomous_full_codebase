@@ -115,6 +115,24 @@ public class ShooterSystem {
         crServobackR.setPower(0);
     }
 
+    public void frontShooting() {
+        if (currentShooterTarget != 1550) {
+            currentShooterTarget -= 100;
+        } else {
+
+        }
+    }
+
+    public void backShooting() {
+        if (currentShooterTarget != 1650) {
+            currentShooterTarget += 100;
+        } else {
+
+        }
+    }
+
+
+
     /**
      * Manually adjust the shooter velocity (useful for TeleOp tuning).
      */

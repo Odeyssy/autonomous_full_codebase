@@ -35,6 +35,7 @@ public class BlueBack6 extends OpMode {
         intake = new IntakeSystem(hardwareMap);
         limelightAligner = new LimelightAligner(hardwareMap);
         shooter = new ShooterSystem(hardwareMap);
+        shooter.backShooting();
 
         follower.setStartingPose(new Pose(56.000, 8.000, Math.toRadians(90)));
 
