@@ -29,7 +29,7 @@ public class RedBack6 extends OpMode {
     public void init() {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         follower = Constants.createFollower(hardwareMap);
-        follower.setMaxPower(0.6);
+        follower.setMaxPower(1);
 
         intake = new IntakeSystem(hardwareMap);
         limelightAligner = new LimelightAligner(hardwareMap);
@@ -83,7 +83,7 @@ public class RedBack6 extends OpMode {
             case 3:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path2, true);
-                    pathState = 4;
+                    pathState = 7; //4;
                 }
                 break;
 
@@ -169,7 +169,7 @@ public class RedBack6 extends OpMode {
             Path2 = follower.pathBuilder()
                     .addPath(new BezierLine(
                             new Pose(88.0, 34.939),
-                            new Pose(135.448, 34.939)
+                            new Pose(125.0, 34.939)
                     ))
                     .setLinearHeadingInterpolation(
                             Math.toRadians(180),
@@ -179,7 +179,7 @@ public class RedBack6 extends OpMode {
 
             Path3 = follower.pathBuilder()
                     .addPath(new BezierLine(
-                            new Pose(135.448, 34.939),
+                            new Pose(125.0, 34.939),
                             new Pose(88.0, 8.0)
                     ))
                     .setLinearHeadingInterpolation(

@@ -29,7 +29,7 @@ public class BlueBack6 extends OpMode {
     public void init() {
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         follower = Constants.createFollower(hardwareMap);
-        follower.setMaxPower(0.6);
+        follower.setMaxPower(1);
 
         // Set starting pose to match the first point of movement
         intake = new IntakeSystem(hardwareMap);
@@ -95,14 +95,14 @@ public class BlueBack6 extends OpMode {
             case 3:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path2, true);
-                    pathState = 4;
+                    pathState = 4;//4;
                 }
                 break;
 
             case 4:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path3, true);
-                    pathState = 52;
+                    pathState = 52;//52;
                 }
                 break;
 
@@ -119,7 +119,7 @@ public class BlueBack6 extends OpMode {
                 if (stateTimer.seconds() > 4.0) {
                     shooter.stopFeeding();
                     follower.followPath(paths.Path4, true);
-                    pathState = 22;
+                    pathState = 22;//7;
                 }
                 break;
 
@@ -128,7 +128,7 @@ public class BlueBack6 extends OpMode {
                     shooter.stopFeeding();
                     intake.runIntake();
                     follower.followPath(paths.Path5, true);
-                    pathState = 98;
+                    pathState = 98; //98;
                 }
                 break;
 
@@ -176,35 +176,35 @@ public class BlueBack6 extends OpMode {
                     .build();
 
             Path1 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(54, 14.001), new Pose(50, 25)))
+                            new BezierLine(new Pose(54, 14.001), new Pose(53, 26))) //y_end=25
                     .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(0))
                     .build();
 
             // MOVEMENT 2
             Path2 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(50, 25), new Pose(0, 25)))
+                            new BezierLine(new Pose(53, 26), new Pose(8, 25))) //x_end = 0, y_start=25
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                     .build();
 
             // MOVEMENT 3
             Path3 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(0, 25), new Pose(55.849, 9)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(128))
+                            new BezierLine(new Pose(8, 25), new Pose(55.849, 16)))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(120))
                     .build();
 
             // MOVEMENT 4
             Path4 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(55.849, 9), new Pose(44, 54)))
-                    .setLinearHeadingInterpolation(Math.toRadians(128), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0))
                     .build();
 
             Path5 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(44, 54), new Pose(6, 54)))
+                            new BezierLine(new Pose(44, 52), new Pose(9, 52)))
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                     .build();
 
             Path6 = follower.pathBuilder().addPath(
-                            new BezierLine(new Pose(6, 54), new Pose(33, 14)))
+                            new BezierLine(new Pose(9, 54), new Pose(33, 14)))
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
                     .build();
         }
