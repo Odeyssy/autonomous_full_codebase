@@ -83,14 +83,14 @@ public class RedBack6 extends OpMode {
             case 3:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path2, true);
-                    pathState = 7; //4;
+                    pathState = 4; //4;
                 }
                 break;
 
             case 4:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path3, true);
-                    pathState = 52;
+                    pathState = 52; //52;
                 }
                 break;
 
@@ -107,14 +107,14 @@ public class RedBack6 extends OpMode {
                 if (stateTimer.seconds() > 4.0) {
                     shooter.stopFeeding();
                     follower.followPath(paths.Path4, true);
-                    pathState = 5;
+                    pathState = 5; //5;
                 }
                 break;
 
             case 5:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path5, true);
-                    pathState = 6;
+                    pathState = 7; //6;
                 }
                 break;
 
@@ -151,7 +151,7 @@ public class RedBack6 extends OpMode {
                     ))
                     .setLinearHeadingInterpolation(
                             Math.toRadians(90),
-                            Math.toRadians(65)
+                            Math.toRadians(60)
                     )
                     .build();
 
@@ -161,7 +161,7 @@ public class RedBack6 extends OpMode {
                             new Pose(88.0, 34.939)
                     ))
                     .setLinearHeadingInterpolation(
-                            Math.toRadians(65),
+                            Math.toRadians(60),
                             Math.toRadians(180)
                     )
                     .build();
@@ -180,7 +180,7 @@ public class RedBack6 extends OpMode {
             Path3 = follower.pathBuilder()
                     .addPath(new BezierLine(
                             new Pose(125.0, 34.939),
-                            new Pose(88.0, 8.0)
+                            new Pose(88.0, 12.0)
                     ))
                     .setLinearHeadingInterpolation(
                             Math.toRadians(180),
