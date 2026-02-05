@@ -33,7 +33,7 @@ public class BlueFront6 extends OpMode {
         intake = new IntakeSystem(hardwareMap);
         limelightAligner = new LimelightAligner(hardwareMap);
         shooter = new ShooterSystem(hardwareMap);
-        shooter.frontShooting();
+        //shooter.frontShooting();
 
         // Robot starts at (72, 8)
         follower.setStartingPose(new Pose(21, 123, Math.toRadians(142)));

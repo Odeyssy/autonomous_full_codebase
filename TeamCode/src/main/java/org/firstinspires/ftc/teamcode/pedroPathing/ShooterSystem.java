@@ -27,10 +27,10 @@ public class ShooterSystem {
     public static double F = 12.5;  // Auto-calculates if 0
 
     // Constants from your TeleOp
-    public static double currentShooterTarget = 1650.0;
+    public static double currentShooterTarget = 1600.0;
     private final double VELOCITY_STEP = 50.0;
     private final double MAX_VELOCITY = 2800.0;
-    private final double RAMP_VELOCITY = 850.0;
+    private final double RAMP_VELOCITY = 950.0;
 
     // Servo Positions
     public static double GATE_OPEN = 0.5;
@@ -115,21 +115,21 @@ public class ShooterSystem {
         crServobackR.setPower(0);
     }
 
-    public void frontShooting() {
-        if (currentShooterTarget != 1550) {
-            currentShooterTarget -= 100;
-        } else {
+//    public void frontShooting() {
+//        if (currentShooterTarget != 1550) {
+//            currentShooterTarget -= 100;
+//        } else {
+//
+//        }
+//    }
 
-        }
-    }
-
-    public void backShooting() {
-        if (currentShooterTarget != 1650) {
-            currentShooterTarget += 100;
-        } else {
-
-        }
-    }
+//    public void backShooting() {
+//        if (currentShooterTarget != 1650) {
+//            currentShooterTarget += 100;
+//        } else {
+//
+//        }
+//    }
 
 
 

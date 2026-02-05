@@ -57,7 +57,7 @@ public class teleop extends LinearOpMode {
     public static double RAMP_VELOCITY = 850.0;
 
     // --- Shooter Velocity Control (Gamepad 2 D-pad) ---
-    private double currentShooterTarget = 1400.0;  // Starting velocity
+    private double currentShooterTarget = 1600.0;  // Starting velocity
     private final double VELOCITY_STEP = 50.0;     // Increment per button press
     private final double MIN_VELOCITY = 1400.0;    // Minimum velocity
     private final double MAX_VELOCITY = 2100.0;    // Maximum velocity
