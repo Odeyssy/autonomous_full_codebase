@@ -53,6 +53,7 @@ public class BlueBack6 extends OpMode {
     }
 
     public void autonomousPathUpdate() {
+        double currentAlignPower = 0;
         switch (pathState) {
             case 0:
                 shooter.startFlywheels();
@@ -67,25 +68,65 @@ public class BlueBack6 extends OpMode {
                 }
                 break;
 
-            case 10: //align for volley 1
-                double alignPower = limelightAligner.calculateAlignPower(-99);
+//            case 10: // Align for volley 1
+//                currentAlignPower = limelightAligner.calculateAlignPower(-99);
+//
+//                // Driver Hub Telemetry
+//                telemetry.addLine("--- VOLLEY 1 ALIGNMENT ---");
+//                telemetry.addData("Status", (currentAlignPower == -99) ? "LOST TARGET" : "LOCKING");
+//                telemetry.addData("Power", "%.3f", currentAlignPower);
+//                telemetry.addData("Timer", "%.2f s", stateTimer.seconds());
+//
+//                if (currentAlignPower == -99) {
+//                    follower.setTeleOpDrive(0, 0, 0, false);
+//                } else if (Math.abs(currentAlignPower) < 0.02 || stateTimer.seconds() > 5) {
+//                    follower.setTeleOpDrive(0, 0, 0, false);
+//                    if (shooter.isAtVelocity()) {
+//                        shooter.shoot();
+//                        stateTimer.reset();
+//                        pathState = 2;
+//                    }
+//                } else {
+//                    // Ensure Robot-Centric (false) and check rotation direction
+//                    follower.setTeleOpDrive(0, 0, -currentAlignPower, false);
+//                }
+//                break;
 
-                if (alignPower == -99) {
-                    // Optional: Keep searching or just wait
-                    follower.setTeleOpDrive(0, 0, 0, true);
-                } else if (alignPower == 0 || stateTimer.seconds() > 2.5) {
-                    follower.setTeleOpDrive(0, 0, 0, true);
+            case 10: // Align for volley 1
+                currentAlignPower = limelightAligner.calculateAlignPower(-99);
+
+                // Driver Hub Telemetry
+                telemetry.addLine("--- VOLLEY 1 ALIGNMENT ---");
+                telemetry.addData("Status", (currentAlignPower == -99) ? "LOST TARGET" : "LOCKING");
+                telemetry.addData("Power", "%.3f", currentAlignPower);
+                telemetry.addData("Timer", "%.2f s", stateTimer.seconds());
+
+                if (currentAlignPower == -99) {
+                    // TARGET LOST: Stop movement and wait for target to appear
+                    follower.setTeleOpDrive(0, 0, 0, false);
+
+                    // Safety: If we've looked for 1.5s and still see nothing, skip to shooting
+                    if (stateTimer.seconds() > 1.5) {
+                        pathState = 2; // Or wherever your "failed lock" fallback is
+                        stateTimer.reset();
+                    }
+                }
+                else if (Math.abs(currentAlignPower) < 0.02 || stateTimer.seconds() > 5.0) {
+                    // TARGET LOCKED: We are within the threshold OR we hit the 5s hard timeout
+                    follower.setTeleOpDrive(0, 0, 0, false);
+
                     if (shooter.isAtVelocity()) {
                         shooter.shoot();
                         stateTimer.reset();
                         pathState = 2;
                     }
-                } else {
-                    // Apply the P-loop power
-                    follower.setTeleOpDrive(0, 0, -alignPower, true);
+                }
+                else {
+                    // TARGET TRACKING: We see it, now rotate to center it
+                    // Note: Using -currentAlignPower based on your previous working code
+                    follower.setTeleOpDrive(0, 0, -currentAlignPower, false);
                 }
                 break;
-
             case 2:
                 if (stateTimer.seconds() > 6.0) { // Volley 1 duration
                     shooter.stopFeeding();
@@ -123,26 +164,49 @@ public class BlueBack6 extends OpMode {
                 }
                 break;
 
-            case 60: // Align before Volley 2
-                // Use -99 to distinguish between "Centered" and "Target Not Found"
-                double alignPower2 = limelightAligner.calculateAlignPower(-99);
+//            case 60: // Align before Volley 2
+//                currentAlignPower = limelightAligner.calculateAlignPower(-99);
+//
+//                telemetry.addLine("--- VOLLEY 2 ALIGNMENT ---");
+//                telemetry.addData("Power", "%.3f", currentAlignPower);
+//
+//                if (currentAlignPower == 0 || stateTimer.seconds() > 5) {
+//                    follower.setTeleOpDrive(0, 0, 0, false);
+//                    pathState = 53;
+//                } else if (currentAlignPower == -99) {
+//                    follower.setTeleOpDrive(0, 0, 0, false);
+//                    if (stateTimer.seconds() > 1.0) pathState = 53;
+//                } else {
+//                    follower.setTeleOpDrive(0, 0, currentAlignPower, false);
+//                }
+//                break;
 
-                // 1. If we are centered (0) OR we've timed out (1.5s)
-                if (alignPower2 == 0 || stateTimer.seconds() > 1.5) {
-                    follower.setTeleOpDrive(0, 0, 0, true);
+            case 60: // Align before Volley 2
+                currentAlignPower = limelightAligner.calculateAlignPower(-99);
+
+                telemetry.addLine("--- VOLLEY 2 ALIGNMENT ---");
+                telemetry.addData("Power", "%.3f", currentAlignPower);
+                telemetry.addData("Timer", "%.2f", stateTimer.seconds());
+
+                if (currentAlignPower == -99) {
+                    // We have no target. Stop and wait for one.
+                    follower.setTeleOpDrive(0, 0, 0, false);
+
+                    // If we've looked for over 1.5 seconds and seen nothing, give up and shoot anyway
+                    if (stateTimer.seconds() > 1.5) {
+                        pathState = 53;
+                        stateTimer.reset();
+                    }
+                }
+                else if (currentAlignPower == 0 || stateTimer.seconds() > 5.0) {
+                    // We HAVE a target and it's centered (0), OR we hit the hard timeout (5s)
+                    follower.setTeleOpDrive(0, 0, 0, false);
                     pathState = 53;
+                    stateTimer.reset();
                 }
-                // 2. If the Limelight can't see the target (-99)
-                else if (alignPower2 == -99) {
-                    // Stop moving and wait for a lock, or skip if timer is high
-                    follower.setTeleOpDrive(0, 0, 0, true);
-                    if (stateTimer.seconds() > 1.0) pathState = 53; // Skip if lost too long
-                }
-                // 3. We have a target and need to move
                 else {
-                    // 'true' ensures Robot-Centric movement for the Limelight offset
-                    // We use -alignPower2 if your bot turns the wrong way
-                    follower.setTeleOpDrive(0, 0, alignPower2, true);
+                    // We HAVE a target and we are actively moving toward it
+                    follower.setTeleOpDrive(0, 0, currentAlignPower, false);
                 }
                 break;
 
