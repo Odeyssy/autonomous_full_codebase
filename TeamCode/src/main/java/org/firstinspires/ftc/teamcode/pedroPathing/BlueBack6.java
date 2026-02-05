@@ -67,17 +67,22 @@ public class BlueBack6 extends OpMode {
                 }
                 break;
 
-            case 10: // Align before Volley 1
-                double alignPower = limelightAligner.calculateAlignPower(0);
-                if (alignPower == 0 || stateTimer.seconds() > 2.5) {
-                    follower.setTeleOpDrive(0, 0, 0);
+            case 10: //align for volley 1
+                double alignPower = limelightAligner.calculateAlignPower(-99);
+
+                if (alignPower == -99) {
+                    // Optional: Keep searching or just wait
+                    follower.setTeleOpDrive(0, 0, 0, true);
+                } else if (alignPower == 0 || stateTimer.seconds() > 2.5) {
+                    follower.setTeleOpDrive(0, 0, 0, true);
                     if (shooter.isAtVelocity()) {
                         shooter.shoot();
                         stateTimer.reset();
                         pathState = 2;
                     }
                 } else {
-                    follower.setTeleOpDrive(0, 0, alignPower);
+                    // Apply the P-loop power
+                    follower.setTeleOpDrive(0, 0, -alignPower, true);
                 }
                 break;
 
@@ -119,14 +124,28 @@ public class BlueBack6 extends OpMode {
                 break;
 
             case 60: // Align before Volley 2
-                double alignPower2 = limelightAligner.calculateAlignPower(0);
+                // Use -99 to distinguish between "Centered" and "Target Not Found"
+                double alignPower2 = limelightAligner.calculateAlignPower(-99);
+
+                // 1. If we are centered (0) OR we've timed out (1.5s)
                 if (alignPower2 == 0 || stateTimer.seconds() > 1.5) {
-                    follower.setTeleOpDrive(0, 0, 0);
+                    follower.setTeleOpDrive(0, 0, 0, true);
                     pathState = 53;
-                } else {
-                    follower.setTeleOpDrive(0, 0, alignPower2);
+                }
+                // 2. If the Limelight can't see the target (-99)
+                else if (alignPower2 == -99) {
+                    // Stop moving and wait for a lock, or skip if timer is high
+                    follower.setTeleOpDrive(0, 0, 0, true);
+                    if (stateTimer.seconds() > 1.0) pathState = 53; // Skip if lost too long
+                }
+                // 3. We have a target and need to move
+                else {
+                    // 'true' ensures Robot-Centric movement for the Limelight offset
+                    // We use -alignPower2 if your bot turns the wrong way
+                    follower.setTeleOpDrive(0, 0, alignPower2, true);
                 }
                 break;
+
 
             case 53:
                 if (shooter.isAtVelocity()) {
@@ -234,12 +253,12 @@ public class BlueBack6 extends OpMode {
 
             Path3 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(8, 25), new Pose(55.849, 16)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(125))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(120))
                     .build();
 
             Path4 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(55.849, 9), new Pose(44, 54)))
-                    .setLinearHeadingInterpolation(Math.toRadians(125), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0))
                     .build();
 
             Path5 = follower.pathBuilder().addPath(
@@ -249,11 +268,11 @@ public class BlueBack6 extends OpMode {
 
             Path6 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(9, 54), new Pose(56, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(125))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(120))
                     .build();
             Path7 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56, 14), new Pose(8, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(60), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0))
                     .build();
         }
     }

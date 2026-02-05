@@ -34,24 +34,25 @@ public class LimelightAligner {
 
         if (result != null && result.isValid()) {
             List<FiducialResult> tags = result.getFiducialResults();
-
             for (FiducialResult tag : tags) {
                 if (tag.getFiducialId() == TARGET_TAG_ID_BLUE || tag.getFiducialId() == TARGET_TAG_ID_RED) {
                     double xOffset = tag.getTargetXDegrees() - X_OFFSET_ADJUSTMENT;
 
-                    if (Math.abs(xOffset) < ALIGNMENT_TOLERANCE) {
-                        return 0; // Centered
-                    }
+                    if (Math.abs(xOffset) < ALIGNMENT_TOLERANCE) return 0;
 
-                    // Determine power based on distance
-                    double p = (Math.abs(xOffset) < ALIGNMENT_SLOW_ZONE) ? ALIGNMENT_SLOW_POWER : ALIGNMENT_TURN_POWER;
+                    // Simple P-Controller: Power = Error * Gain
+                    // Adjust 0.04 to make it more or less aggressive
+                    double kP = 0.04;
+                    double power = xOffset * kP;
 
-                    // Return positive or negative power based on offset direction
-                    return (xOffset > 0) ? -p : p;
+                    // Clamp the power so it doesn't spin too fast
+                    return Math.max(-0.4, Math.min(0.4, power));
                 }
             }
         }
-        return manualTurn; // If no tag found, don't override the driver
+        // CRITICAL: Return a special value like -99 if no tag is found
+        // so your OpMode knows the difference between "Centered" and "Lost"
+        return -99;
     }
 
     public void stop() {

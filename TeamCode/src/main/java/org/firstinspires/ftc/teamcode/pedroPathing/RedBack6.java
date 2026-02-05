@@ -471,7 +471,7 @@ public class RedBack6 extends OpMode {
                 break;
 
             case 2:
-                if (stateTimer.seconds() > 2.5) {
+                if (stateTimer.seconds() > 7) {
                     shooter.stopFeeding(); // Closes Gate
                     intake.runIntake();
                     follower.followPath(paths.Path1, true);
@@ -615,12 +615,12 @@ public class RedBack6 extends OpMode {
 
             Path3 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(125.0, 34.939), new Pose(88.0, 12.0)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(60))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(55))
                     .build();
 
             Path4 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(88.0, 12.0), new Pose(88, 64)))
-                    .setLinearHeadingInterpolation(Math.toRadians(60), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(55), Math.toRadians(180))
                     .build();
 
             Path5 = follower.pathBuilder()
@@ -630,12 +630,12 @@ public class RedBack6 extends OpMode {
 
             Path6 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(125, 64), new Pose(88, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(60))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(55))
                     .build();
 
             Path7 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(88, 14), new Pose(125, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(60), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(55), Math.toRadians(180))
                     .build();
 
 
