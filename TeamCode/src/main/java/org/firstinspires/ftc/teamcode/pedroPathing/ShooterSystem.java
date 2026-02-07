@@ -27,7 +27,7 @@ public class ShooterSystem {
     public static double F = 12.5;  // Auto-calculates if 0
 
     // Constants from your TeleOp
-    public static double currentShooterTarget = 1600.0;
+    public static double currentShooterTarget = 1650.0;
     private final double VELOCITY_STEP = 50.0;
     private final double MAX_VELOCITY = 2800.0;
     private final double RAMP_VELOCITY = 950.0;
@@ -140,6 +140,13 @@ public class ShooterSystem {
         if (increase) currentShooterTarget += VELOCITY_STEP;
         else currentShooterTarget -= VELOCITY_STEP;
         currentShooterTarget = Range.clip(currentShooterTarget, 0, MAX_VELOCITY);
+    }
+    public void setTargetVelocity(double newTarget) {
+        currentShooterTarget = newTarget;
+        // If flywheels are already running, update their speed immediately
+        if (shooterMotor1.getVelocity() > 10) {
+            startFlywheels();
+        }
     }
 
     // --- Getters ---

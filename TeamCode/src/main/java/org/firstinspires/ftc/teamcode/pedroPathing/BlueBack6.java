@@ -10,7 +10,7 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Blue BACK 6 ARTIFACT (WORKING)", group = "Autonomous")
+@Autonomous(name = "Blue BACK 6 ARTIFACT", group = "Autonomous")
 public class BlueBack6 extends OpMode {
     private TelemetryManager panelsTelemetry;
     public Follower follower;
@@ -18,7 +18,6 @@ public class BlueBack6 extends OpMode {
     private Paths paths;
 
     private IntakeSystem intake;
-    private LimelightAligner limelightAligner;
     private ShooterSystem shooter;
     private ElapsedTime stateTimer = new ElapsedTime();
 
@@ -29,10 +28,7 @@ public class BlueBack6 extends OpMode {
         follower.setMaxPower(1);
 
         intake = new IntakeSystem(hardwareMap);
-        limelightAligner = new LimelightAligner(hardwareMap);
         shooter = new ShooterSystem(hardwareMap);
-
-        //shooter.backShooting(); // Set target to 1650
 
         follower.setStartingPose(new Pose(56.000, 8.000, Math.toRadians(90)));
         paths = new Paths(follower);
@@ -47,14 +43,34 @@ public class BlueBack6 extends OpMode {
         autonomousPathUpdate();
 
         panelsTelemetry.debug("Path State", pathState);
-        panelsTelemetry.debug("Actual Vel", shooter.getActualVelocity());
         panelsTelemetry.debug("Shooter Ready", shooter.isAtVelocity());
         panelsTelemetry.update(telemetry);
     }
 
+    /*
+     * STATE MACHINE:
+     *  0  -> Start flywheels, drive to (56, 14)
+     *  1  -> Wait for arrival
+     *  2  -> SHOOT VOLLEY 1 (intake + shoot for 6s)
+     *  67 -> Straighten heading
+     *  3  -> Drive to (56, 26)
+     *  4  -> Push to (8, 25)
+     *  52 -> Return to (55.849, 16), wait for arrival
+     *  53 -> SHOOT VOLLEY 2 (shoot when ready)
+     *  54 -> Wait for volley, head to (44, 54)
+     *  22 -> Drive to (9, 52) with intake on
+     *  98 -> Return to (56, 14)
+     *  520-> Wait for arrival
+     *  55 -> SHOOT VOLLEY 3 (shoot when ready)
+     *  63 -> Wait for volley
+     *  69 -> Drive to park (8, 14)
+     *  7  -> Stop everything
+     *  8  -> Idle
+     */
     public void autonomousPathUpdate() {
-        double currentAlignPower = 0;
         switch (pathState) {
+
+            // ===================== DRIVE TO SHOOTING POSITION =====================
             case 0:
                 shooter.startFlywheels();
                 follower.followPath(paths.Path0, true);
@@ -64,78 +80,23 @@ public class BlueBack6 extends OpMode {
             case 1:
                 if (!follower.isBusy()) {
                     stateTimer.reset();
-                    pathState = 10;
+                    pathState = 2;
                 }
                 break;
 
-//            case 10: // Align for volley 1
-//                currentAlignPower = limelightAligner.calculateAlignPower(-99);
-//
-//                // Driver Hub Telemetry
-//                telemetry.addLine("--- VOLLEY 1 ALIGNMENT ---");
-//                telemetry.addData("Status", (currentAlignPower == -99) ? "LOST TARGET" : "LOCKING");
-//                telemetry.addData("Power", "%.3f", currentAlignPower);
-//                telemetry.addData("Timer", "%.2f s", stateTimer.seconds());
-//
-//                if (currentAlignPower == -99) {
-//                    follower.setTeleOpDrive(0, 0, 0, false);
-//                } else if (Math.abs(currentAlignPower) < 0.02 || stateTimer.seconds() > 5) {
-//                    follower.setTeleOpDrive(0, 0, 0, false);
-//                    if (shooter.isAtVelocity()) {
-//                        shooter.shoot();
-//                        stateTimer.reset();
-//                        pathState = 2;
-//                    }
-//                } else {
-//                    // Ensure Robot-Centric (false) and check rotation direction
-//                    follower.setTeleOpDrive(0, 0, -currentAlignPower, false);
-//                }
-//                break;
-
-            case 10: // Align for volley 1
-                currentAlignPower = limelightAligner.calculateAlignPower(-99);
-
-                // Driver Hub Telemetry
-                telemetry.addLine("--- VOLLEY 1 ALIGNMENT ---");
-                telemetry.addData("Status", (currentAlignPower == -99) ? "LOST TARGET" : "LOCKING");
-                telemetry.addData("Power", "%.3f", currentAlignPower);
-                telemetry.addData("Timer", "%.2f s", stateTimer.seconds());
-
-                if (currentAlignPower == -99) {
-                    // TARGET LOST: Stop movement and wait for target to appear
-                    follower.setTeleOpDrive(0, 0, 0, false);
-
-                    // Safety: If we've looked for 1.5s and still see nothing, skip to shooting
-                    if (stateTimer.seconds() > 1.5) {
-                        pathState = 2; // Or wherever your "failed lock" fallback is
-                        stateTimer.reset();
-                    }
-                }
-                else if (Math.abs(currentAlignPower) < 0.02 || stateTimer.seconds() > 5.0) {
-                    // TARGET LOCKED: We are within the threshold OR we hit the 5s hard timeout
-                    follower.setTeleOpDrive(0, 0, 0, false);
-
-                    if (shooter.isAtVelocity()) {
-                        shooter.shoot();
-                        stateTimer.reset();
-                        pathState = 2;
-                    }
-                }
-                else {
-                    // TARGET TRACKING: We see it, now rotate to center it
-                    // Note: Using -currentAlignPower based on your previous working code
-                    follower.setTeleOpDrive(0, 0, -currentAlignPower, false);
-                }
-                break;
+            // ===================== VOLLEY 1 @ (56, 14) =====================
             case 2:
-                if (stateTimer.seconds() > 6.0) { // Volley 1 duration
+                intake.runIntake();
+                shooter.shoot();
+                if (stateTimer.seconds() > 6.0) {
                     shooter.stopFeeding();
-                    intake.runIntake();
+                    intake.runIntake(); // Keep intake on for pickup
                     follower.followPath(paths.PathStraight, true);
                     pathState = 67;
                 }
                 break;
 
+            // ===================== CYCLE 1: PICK UP (intake stays on) =====================
             case 67:
                 if (!follower.isBusy()) {
                     follower.followPath(paths.Path1, true);
@@ -152,6 +113,7 @@ public class BlueBack6 extends OpMode {
 
             case 4:
                 if (!follower.isBusy()) {
+                    intake.stopAll(); // Done picking up
                     follower.followPath(paths.Path3, true);
                     pathState = 52;
                 }
@@ -160,59 +122,19 @@ public class BlueBack6 extends OpMode {
             case 52:
                 if (!follower.isBusy()) {
                     stateTimer.reset();
-                    pathState = 60;
-                }
-                break;
-
-//            case 60: // Align before Volley 2
-//                currentAlignPower = limelightAligner.calculateAlignPower(-99);
-//
-//                telemetry.addLine("--- VOLLEY 2 ALIGNMENT ---");
-//                telemetry.addData("Power", "%.3f", currentAlignPower);
-//
-//                if (currentAlignPower == 0 || stateTimer.seconds() > 5) {
-//                    follower.setTeleOpDrive(0, 0, 0, false);
-//                    pathState = 53;
-//                } else if (currentAlignPower == -99) {
-//                    follower.setTeleOpDrive(0, 0, 0, false);
-//                    if (stateTimer.seconds() > 1.0) pathState = 53;
-//                } else {
-//                    follower.setTeleOpDrive(0, 0, currentAlignPower, false);
-//                }
-//                break;
-
-            case 60: // Align before Volley 2
-                currentAlignPower = limelightAligner.calculateAlignPower(-99);
-
-                telemetry.addLine("--- VOLLEY 2 ALIGNMENT ---");
-                telemetry.addData("Power", "%.3f", currentAlignPower);
-                telemetry.addData("Timer", "%.2f", stateTimer.seconds());
-
-                if (currentAlignPower == -99) {
-                    // We have no target. Stop and wait for one.
-                    follower.setTeleOpDrive(0, 0, 0, false);
-
-                    // If we've looked for over 1.5 seconds and seen nothing, give up and shoot anyway
-                    if (stateTimer.seconds() > 1.5) {
-                        pathState = 53;
-                        stateTimer.reset();
-                    }
-                }
-                else if (currentAlignPower == 0 || stateTimer.seconds() > 5.0) {
-                    // We HAVE a target and it's centered (0), OR we hit the hard timeout (5s)
-                    follower.setTeleOpDrive(0, 0, 0, false);
                     pathState = 53;
-                    stateTimer.reset();
-                }
-                else {
-                    // We HAVE a target and we are actively moving toward it
-                    follower.setTeleOpDrive(0, 0, currentAlignPower, false);
                 }
                 break;
 
-
+            // ===================== VOLLEY 2 @ (55.849, 16) =====================
             case 53:
                 if (shooter.isAtVelocity()) {
+                    intake.runIntake();
+                    shooter.shoot();
+                    stateTimer.reset();
+                    pathState = 54;
+                } else if (stateTimer.seconds() > 3.0) {
+                    intake.runIntake();
                     shooter.shoot();
                     stateTimer.reset();
                     pathState = 54;
@@ -222,40 +144,44 @@ public class BlueBack6 extends OpMode {
             case 54:
                 if (stateTimer.seconds() > 3.0) {
                     shooter.stopFeeding();
+                    intake.runIntake(); // Keep intake on for next pickup
                     follower.followPath(paths.Path4, true);
                     pathState = 22;
                 }
                 break;
 
+            // ===================== CYCLE 2: PICK UP (intake stays on) =====================
             case 22:
-                shooter.stopFeeding();
-                intake.runIntake();
-                follower.followPath(paths.Path5, true);
-                pathState = 98;
+                if (!follower.isBusy()) {
+                    follower.followPath(paths.Path5, true);
+                    pathState = 98;
+                }
                 break;
 
             case 98:
                 if (!follower.isBusy()) {
+                    intake.stopAll(); // Done picking up
                     follower.followPath(paths.Path6, true);
-                    pathState = 61; // Go to Volley 3 alignment
+                    pathState = 520;
                 }
                 break;
 
-            case 61: // Align before Volley 3
+            case 520:
                 if (!follower.isBusy()) {
-                    double alignPower3 = limelightAligner.calculateAlignPower(0);
-                    if (alignPower3 == 0 || stateTimer.seconds() > 1.5) {
-                        follower.setTeleOpDrive(0, 0, 0);
-                        stateTimer.reset();
-                        pathState = 55;
-                    } else {
-                        follower.setTeleOpDrive(0, 0, alignPower3);
-                    }
+                    stateTimer.reset();
+                    pathState = 55;
                 }
                 break;
 
+            // ===================== VOLLEY 3 @ (56, 14) =====================
             case 55:
                 if (shooter.isAtVelocity()) {
+                    intake.runIntake();
+                    shooter.shoot();
+                    stateTimer.reset();
+                    pathState = 63;
+                } else if (stateTimer.seconds() > 3.0) {
+                    intake.runIntake();
                     shooter.shoot();
                     stateTimer.reset();
                     pathState = 63;
@@ -263,32 +189,28 @@ public class BlueBack6 extends OpMode {
                 break;
 
             case 63:
-                if (stateTimer.seconds() > 3.0) { // Volley 3 duration
+                if (stateTimer.seconds() > 3.0) {
                     shooter.stopFeeding();
-                    pathState = 69;
-                }
-                break;
-
-            case 69:
-                if (!follower.isBusy()) {
+                    intake.stopAll();
                     follower.followPath(paths.Path7, true);
                     pathState = 7;
                 }
                 break;
 
+            // ===================== PARK =====================
             case 7:
                 if (!follower.isBusy()) {
                     intake.stopAll();
                     shooter.stopAll();
-                    limelightAligner.stop();
                     pathState = 8;
                 }
                 break;
 
             case 8:
-                follower.setTeleOpDrive(0, 0, 0);
+                // Final idle
                 break;
         }
+        telemetry.update();
     }
 
     public static class Paths {
@@ -297,12 +219,12 @@ public class BlueBack6 extends OpMode {
         public Paths(Follower follower) {
             Path0 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56.0, 8.0), new Pose(56.0, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(125))
+                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(117))
                     .build();
 
             PathStraight = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(56.0, 14.0), new Pose(56, 14.001)))
-                    .setLinearHeadingInterpolation(Math.toRadians(125), Math.toRadians(90))
+                    .setLinearHeadingInterpolation(Math.toRadians(117), Math.toRadians(90))
                     .build();
 
             Path1 = follower.pathBuilder().addPath(
@@ -317,12 +239,12 @@ public class BlueBack6 extends OpMode {
 
             Path3 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(8, 25), new Pose(55.849, 16)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(120))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(117))
                     .build();
 
             Path4 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(55.849, 9), new Pose(44, 54)))
-                    .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(117), Math.toRadians(0))
                     .build();
 
             Path5 = follower.pathBuilder().addPath(
@@ -332,11 +254,12 @@ public class BlueBack6 extends OpMode {
 
             Path6 = follower.pathBuilder().addPath(
                             new BezierLine(new Pose(9, 54), new Pose(56, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(120))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(117))
                     .build();
+
             Path7 = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56, 14), new Pose(8, 14)))
-                    .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(117), Math.toRadians(0))
                     .build();
         }
     }

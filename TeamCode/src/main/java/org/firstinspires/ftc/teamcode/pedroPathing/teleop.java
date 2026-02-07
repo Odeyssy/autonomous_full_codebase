@@ -198,7 +198,7 @@ public class teleop extends LinearOpMode {
 
                     for (FiducialResult tag : tags) {
                         if (tag.getFiducialId() == TARGET_TAG_ID_BLUE || tag.getFiducialId() == TARGET_TAG_ID_RED) {
-                            double xOffset = tag.getTargetXDegrees() - 3;
+                            double xOffset = tag.getTargetXDegrees() - 2;
 
                             telemetry.addData("Alignment", "Tag Found - Offset: %.2f deg", xOffset);
 
