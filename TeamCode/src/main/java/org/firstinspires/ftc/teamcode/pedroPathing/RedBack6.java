@@ -201,12 +201,12 @@ public class RedBack6 extends OpMode {
                     .build();
 
             Path2 = follower.pathBuilder()
-                    .addPath(new BezierLine(new Pose(88.0, 40), new Pose(125.0, 34.939)))
+                    .addPath(new BezierLine(new Pose(88.0, 40), new Pose(128.0, 34.939)))
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
 
             Path3 = follower.pathBuilder()
-                    .addPath(new BezierLine(new Pose(125.0, 34.939), new Pose(88.0, 12.0)))
+                    .addPath(new BezierLine(new Pose(128.0, 34.939), new Pose(88.0, 12.0)))
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(55))
                     .build();
 
