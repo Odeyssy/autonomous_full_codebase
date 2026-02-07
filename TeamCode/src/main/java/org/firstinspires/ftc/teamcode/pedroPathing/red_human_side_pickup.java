@@ -197,12 +197,12 @@ public class red_human_side_pickup extends OpMode {
         public Paths(Follower follower) {
             PathToShoot = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(88.361, 6.916), new Pose(88.000, 15.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(62))
+                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(60))
                     .build();
 
             PathToIntake = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(88.000, 15.000), new Pose(104.241, 35.218)))
-                    .setLinearHeadingInterpolation(Math.toRadians(62), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(60), Math.toRadians(180))
                     .build();
 
             PathPickUp = follower.pathBuilder()
@@ -217,17 +217,17 @@ public class red_human_side_pickup extends OpMode {
 
             PathToPark = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(88.000, 15.000), new Pose(135.779, 9.251)))
-                    .setLinearHeadingInterpolation(Math.toRadians(55), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(57), Math.toRadians(180))
                     .build();
 
             PathParkReturn = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(135.779, 9.251), new Pose(88.000, 15.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(55))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(57))
                     .build();
 
             PathFinalPark = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(88.000, 15.000), new Pose(88.445, 47.238)))
-                    .setLinearHeadingInterpolation(Math.toRadians(55), Math.toRadians(90))
+                    .setLinearHeadingInterpolation(Math.toRadians(57), Math.toRadians(90))
                     .build();
         }
     }
