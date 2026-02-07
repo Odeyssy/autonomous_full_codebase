@@ -101,7 +101,7 @@ public class blue_human_side_pickup extends OpMode {
                 break;
 
             case 11: // Volley done, head to pickup with intake ON
-                if (stateTimer.seconds() > 1.5) {
+                if (stateTimer.seconds() > 5) {
                     shooter.stopFeeding();
                     intake.runIntake();
                     follower.followPath(paths.PathToIntake, true);
@@ -148,7 +148,7 @@ public class blue_human_side_pickup extends OpMode {
                 break;
 
             case 31: // Volley done, head to park pickup with intake ON
-                if (stateTimer.seconds() > 1.5) {
+                if (stateTimer.seconds() > 5) {
                     shooter.stopFeeding();
                     intake.runIntake();
                     follower.followPath(paths.PathToPark, true);
@@ -188,7 +188,7 @@ public class blue_human_side_pickup extends OpMode {
                 break;
 
             case 51:
-                if (stateTimer.seconds() > 1.5) {
+                if (stateTimer.seconds() > 5) {
                     shooter.stopFeeding();
                     intake.stopAll();
                     follower.followPath(paths.PathFinalPark, true);
