@@ -215,13 +215,13 @@ public class blue_human_side_pickup extends OpMode {
             // Start (56, 8) -> Shooting pos (56, 15.222)
             PathToShoot = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56.000, 8.000), new Pose(56.000, 15.222)))
-                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(115))
+                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(120))
                     .build();
 
             // (56, 15.222) -> Intake area (41.99, 35.295)
             PathToIntake = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56.000, 15.222), new Pose(41.990, 35.295)))
-                    .setLinearHeadingInterpolation(Math.toRadians(115), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0))
                     .build();
 
             // Push across (41.99, 35.295) -> (11.32, 35.455)
@@ -233,25 +233,25 @@ public class blue_human_side_pickup extends OpMode {
             // Return (11.32, 35.455) -> (56, 15)
             PathReturnToShoot = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(11.320, 35.455), new Pose(56.000, 15.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(115))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(117))
                     .build();
 
             // (56, 15) -> Park zone (8.01, 8.107)
             PathToPark = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56.000, 15.000), new Pose(8.010, 8.107)))
-                    .setLinearHeadingInterpolation(Math.toRadians(115), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(117), Math.toRadians(0))
                     .build();
 
             // Park zone (8.01, 8.107) -> Back to (56, 15)
             PathParkReturn = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(8.010, 8.107), new Pose(56.000, 15.000)))
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(115))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(117))
                     .build();
 
             // (56, 15) -> Final park (56.501, 56.59)
             PathFinalPark = follower.pathBuilder()
                     .addPath(new BezierLine(new Pose(56.000, 15.000), new Pose(56.501, 56.590)))
-                    .setLinearHeadingInterpolation(Math.toRadians(115), Math.toRadians(90))
+                    .setLinearHeadingInterpolation(Math.toRadians(117), Math.toRadians(90))
                     .build();
         }
     }
